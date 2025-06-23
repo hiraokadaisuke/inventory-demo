@@ -5,6 +5,8 @@ import Head from 'next/head'
 import { supabase } from '@/lib/supabase'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import EditModal from '@/components/EditModal'
+
 
 /* ---------------------------------------------
  * カラム定義
@@ -35,7 +37,6 @@ const columns = [
   { key: 'sell_total_price',     label: '売却金額' },
   { key: 'status',               label: '状況' },
   { key: 'note',                 label: '備考' },
-  { key: 'pdf_url',              label: 'PDF' },
 ]
 
 /* ---------------------------------------------
@@ -51,10 +52,13 @@ export default function AdminInventoryPage() {
   const [sortAsc, setSortAsc]                 = useState(true)
   const [showFilters, setShowFilters]         = useState(false)
   const [selectedColumns, setSelectedColumns] = useState<string[]>(columns.map(c => c.key))
+  const [showModal, setShowModal] = useState(false)         // モーダルを開く状態
+　const [editTarget, setEditTarget] = useState<any>()       // 編集したいデータ
 
   /* 右クリックメニュー */
   const [contextMenu, setContextMenu] =
     useState<{ x: number; y: number; row: any } | null>(null)
+
 
   /* ▼フィルターダイアログ */
   const [filterMenu, setFilterMenu] = useState<{
@@ -83,6 +87,20 @@ export default function AdminInventoryPage() {
   }
   useEffect(() => { fetchData() }, [sortColumn, sortAsc])
 
+  const saveRow = async (data: any) => {
+  if (data.id) {
+    // idがある → 既存行 → 更新
+    await supabase.from('inventory').update(data).eq('id', data.id)
+  } else {
+    // idがない → 新規登録（今回は編集だけなので通常使わない）
+    await supabase.from('inventory').insert(data)
+  }
+
+  setShowModal(false)  // モーダルを閉じる
+  fetchData()          // 表を再読み込み
+}
+
+
   /* ---------- フィルター適用 ---------- */
   useEffect(() => {
     const filtered = allEntries
@@ -95,7 +113,7 @@ export default function AdminInventoryPage() {
     setEntries(filtered)
   }, [allEntries, makerFilter, columnValueFilters])
 
-  /* ---------- CSV インポート (ハンドラ) ---------- */
+  /* ---------- CSV インポート ---------- */
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -122,17 +140,28 @@ export default function AdminInventoryPage() {
   }
 
   /* ---------- 行操作 ---------- */
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (row: any) => {
     if (!window.confirm('本当に削除しますか？')) return
-    await supabase.from('inventory').delete().eq('id', id)
+    await supabase.from('inventory').delete().eq('id', row.id)
     fetchData()
   }
-  const handleEdit = (i: any) => { setEditingId(i.id); setEditForm(i) }
-  const handleSave = async () => {
+  const handleEditClick = (row: any) => {
+  setEditTarget(row)
+  setShowModal(true)
+}
+
+  const handleEdit     = (row: any) => { setEditingId(row.id); setEditForm(row) }
+  const handleSave     = async () => {
     await supabase.from('inventory').update(editForm).eq('id', editingId)
     setEditingId(null)
     fetchData()
   }
+
+  /* ---------- PDF 生成／出品（stub） ---------- */
+  const exportKentei       = (row: any) => { /* TODO: 実装 */ console.log('検定通知書', row) }
+  const exportConfirmation = (row: any) => { /* TODO: 実装 */ console.log('中古遊技機確認書', row) }
+  const exportRemoval      = (row: any) => { /* TODO: 実装 */ console.log('撤去明細書', row) }
+  const exportToPachimart  = (row: any) => { /* TODO: 実装 */ console.log('パチマート出品', row) }
 
   /* ---------- 列切り替え ---------- */
   const toggleColumn = (k: string) => {
@@ -226,7 +255,7 @@ export default function AdminInventoryPage() {
           </select>
         </div>
 
-{/* 🔸列選択 UI（復活） */}
+        {/* 列選択 UI */}
         {showFilters && (
           <div className="flex flex-wrap gap-3 mb-4 p-3 border rounded bg-gray-50">
             {columns.map(c => (
@@ -244,9 +273,10 @@ export default function AdminInventoryPage() {
           </div>
         )}
 
-<div className="flex justify-between items-center mb-1">
-  <div className="text-sm text-[#191970] font-medium">対象件数：{entries.length}件</div>
-</div>
+        {/* 件数 */}
+        <div className="flex justify-between items-center mb-1">
+          <div className="text-sm text-[#191970] font-medium">対象件数：{entries.length}件</div>
+        </div>
 
         {/* データテーブル */}
         <div className="w-full overflow-auto">
@@ -254,26 +284,21 @@ export default function AdminInventoryPage() {
             <thead className="bg-gray-100 text-xs select-none">
               <tr>
                 {columns.filter(c => selectedColumns.includes(c.key)).map(c => {
-                  /* そのカラムの全値（文字列化し空白も） */
                   const values = [...new Set(allEntries.map(e =>
                     String(e[c.key] ?? '(空白セル)')))].sort()
-                  const active = columnValueFilters[c.key]?.size
                   return (
                     <th
-  key={c.key}
-  className="relative px-2 py-1 border text-left cursor-pointer hover:bg-gray-100"
-  onClick={(e) => {
-    e.stopPropagation()
-    const values = [...new Set(allEntries.map(e =>
-      String(e[c.key] ?? '(空白セル)')))].sort()
-    openFilterMenu(c.key, e.clientX, e.clientY, values)
-  }}
->
-  {c.label}
-</th>
+                      key={c.key}
+                      className="relative px-2 py-1 border text-left cursor-pointer hover:bg-gray-100"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        openFilterMenu(c.key, e.clientX, e.clientY, values)
+                      }}
+                    >
+                      {c.label}
+                    </th>
                   )
                 })}
-                <th className="px-2 py-1 border">操作</th>
               </tr>
             </thead>
             <tbody>
@@ -295,56 +320,66 @@ export default function AdminInventoryPage() {
                           : String(row[c.key] ?? '-')}
                     </td>
                   ))}
-                  <td className="px-2 py-1 border whitespace-nowrap">
-                    {editingId === row.id
-                      ? <Button size="sm" onClick={handleSave} className="bg-[#191970] text-white">保存</Button>
-                      : <Button size="sm" onClick={() => handleEdit(row)} className="bg-[#191970] text-white">編集</Button>}
-                    <Button
-                      size="sm"
-                      onClick={() => handleDelete(row.id)}
-                      className="bg-white text-red-600 border border-red-500 hover:bg-red-50 rounded px-3 py-1 text-sm"
-                    >
-                      削除
-                    </Button>
-                  </td>
+                  
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
 
-        {/* 右クリックメニュー例 (内容は省略) */}
+        {/* 右クリックメニュー */}
         {contextMenu && (
-          <ul style={{
-            position: 'fixed', top: contextMenu.y, left: contextMenu.x,
-            background: '#fff', border: '1px solid #ccc', padding: 8, zIndex: 9999,
-            boxShadow: '0 2px 6px rgba(0,0,0,.2)', listStyle: 'none'
-          }}>
-            <li className="cursor-pointer px-3 py-1"
-                onClick={() => setContextMenu(null)}>アクション</li>
-          </ul>
-        )}
+  <ul
+    style={{
+      position: 'fixed',
+      top: contextMenu.y,
+      left: contextMenu.x,
+      background: '#fff',
+      border: '1px solid #ccc',
+      padding: 4,
+      zIndex: 9999,
+      boxShadow: '0 2px 6px rgba(0,0,0,.18)',
+      listStyle: 'none',
+      minWidth: 180,
+    }}
+    onContextMenu={(e) => e.preventDefault()}
+  >
+    <MenuItem label="検定通知書の出力" onClick={() => { exportKentei(contextMenu.row); setContextMenu(null) }} />
+    <MenuItem label="中古遊技機確認書の出力" onClick={() => { exportConfirmation(contextMenu.row); setContextMenu(null) }} />
+    <MenuItem label="撤去明細書の出力" onClick={() => { exportRemoval(contextMenu.row); setContextMenu(null) }} />
+    <MenuItem label="パチマートへ出品" onClick={() => { exportToPachimart(contextMenu.row); setContextMenu(null) }} />
+    
+    <hr className="my-1" />
 
-        {/* フィルターダイアログ */}
+<MenuItem label="編集" onClick={() => { handleEditClick(contextMenu.row); setContextMenu(null) }} />
+    <MenuItem
+      label="削除"
+      onClick={() => { handleDelete(contextMenu.row); setContextMenu(null) }}
+      className="text-red-600"
+    />
+  </ul>
+)
+}
+
+
+        {/* フィルターダイアログ（省略＝元のまま） */}
         {filterMenu && (() => {
           const key  = filterMenu.key
           const allVals = [...new Set(allEntries.map(e => String(e[key] ?? '(空白セル)')))].sort()
           const shown   = allVals.filter(v => v.includes(searchText))
-          /* 選択状態に同期された tempChecked を使う */
-          const toggle = (v: string) => {
+          const toggle  = (v: string) => {
             setTempChecked(prev => {
               const n = new Set(prev)
               n.has(v) ? n.delete(v) : n.add(v)
               return n
             })
           }
-          const ok = () => {
+          const ok    = () => {
             setColumnValueFilters(prev => ({ ...prev, [key]: new Set(tempChecked) }))
             setFilterMenu(null)
           }
-          const clear = () => {
-            setTempChecked(new Set(allVals))
-          }
+          const clear = () => setTempChecked(new Set(allVals))
+
           return (
             <div
               style={{
@@ -354,22 +389,19 @@ export default function AdminInventoryPage() {
               }}
               onClick={e => e.stopPropagation()}
             >
-              {/* ソート */}
               <div className="text-sm cursor-pointer hover:bg-gray-100 px-2 py-[2px]"
-                   onClick={() => { setSortColumn(key); setSortAsc(true); setFilterMenu(null) }}>▲ 昇順</div>
+                   onClick={() => { setSortColumn(key); setSortAsc(true);  setFilterMenu(null) }}>▲ 昇順</div>
               <div className="text-sm cursor-pointer hover:bg-gray-100 px-2 py-[2px]"
                    onClick={() => { setSortColumn(key); setSortAsc(false); setFilterMenu(null) }}>▼ 降順</div>
               <hr className="my-1" />
-              {/* 検索 */}
               <Input placeholder="検索" value={searchText}
                      onChange={e => setSearchText(e.target.value)} className="mb-1" />
-              {/* チェックリスト */}
               <div className="max-h-40 overflow-auto border px-1 py-[2px] text-sm">
                 <label className="flex items-center space-x-1">
                   <input type="checkbox"
                          checked={tempChecked.size === allVals.length}
                          onChange={() => tempChecked.size === allVals.length
-                           ? setTempChecked(new Set())  /* none */
+                           ? setTempChecked(new Set())      // none
                            : setTempChecked(new Set(allVals))} />
                   <span>(すべて選択)</span>
                 </label>
@@ -381,35 +413,57 @@ export default function AdminInventoryPage() {
                     <span>{v}</span>
                   </label>
                 ))}
+                
               </div>
-              {/* ボタン */}
               <div className="flex justify-end gap-2 mt-2">
-                <Button
-                  size="sm"
-                  onClick={() => setFilterMenu(null)}
-                  className="bg-gray-200 text-gray-700 hover:bg-gray-300 rounded px-3 py-1 text-sm"
-                >
+                <Button size="sm" onClick={() => setFilterMenu(null)}
+                        className="bg-gray-200 text-gray-700 hover:bg-gray-300 rounded px-3 py-1 text-sm">
                   キャンセル
                 </Button>
-                <Button
-                  size="sm"
-                  onClick={clear}
-                  className="bg-gray-200 text-gray-700 hover:bg-gray-300 rounded px-3 py-1 text-sm"
-                >
+                <Button size="sm" onClick={clear}
+                        className="bg-gray-200 text-gray-700 hover:bg-gray-300 rounded px-3 py-1 text-sm">
                   クリア
                 </Button>
-                <Button
-                  size="sm"
-                  onClick={ok}
-                  className="bg-[#191970] text-white hover:bg-[#15155d] rounded px-3 py-1 text-sm"
-                >
+                <Button size="sm" onClick={ok}
+                        className="bg-[#191970] text-white hover:bg-[#15155d] rounded px-3 py-1 text-sm">
                   OK
                 </Button>
               </div>
             </div>
           )
         })()}
+        
       </div>
+      {/* 編集モーダル */}
+<EditModal
+  isOpen={showModal}
+  onClose={() => setShowModal(false)}
+  onSave={saveRow}
+  data={editTarget}
+/>
+
     </>
+  )
+}
+
+/* ------------------------------------------------------------------
+ * 共通メニュー項目コンポーネント
+ * ---------------------------------------------------------------- */
+function MenuItem({
+  label,
+  onClick,
+  className = '',
+}: {
+  label: string
+  onClick: () => void
+  className?: string
+}) {
+  return (
+    <li
+      className={`cursor-pointer px-3 py-[6px] hover:bg-gray-100 text-sm whitespace-nowrap ${className}`}
+      onClick={onClick}
+    >
+      {label}
+    </li>
   )
 }
