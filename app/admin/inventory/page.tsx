@@ -6,8 +6,12 @@ import { supabase } from '@/lib/supabase'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import EditModal from '@/components/EditModal'
-import { Download, Upload, Pencil, Trash2 } from 'lucide-react'
+import { Download,  Pencil, Trash2 } from 'lucide-react'
 import { Package } from 'lucide-react'
+import { MoreVertical } from 'lucide-react';
+import { Upload, FileText } from 'lucide-react'
+
+
 
 
 
@@ -58,6 +62,9 @@ export default function AdminInventoryPage() {
   const [selectedColumns, setSelectedColumns] = useState<string[]>(columns.map(c => c.key))
   const [showModal, setShowModal] = useState(false)         // モーダルを開く状態
 　const [editTarget, setEditTarget] = useState<any>()       // 編集したいデータ
+  const [mobileMenuRow, setMobileMenuRow] = useState<any | null>(null)
+  
+
 
   /* 右クリックメニュー */
   const [contextMenu, setContextMenu] =
@@ -203,6 +210,16 @@ export default function AdminInventoryPage() {
     setSearchText('')
   }
 
+  // ダウンロード機能
+const exportToCSV = (row: any) => {
+  const csv = `${Object.keys(row).join(',')}\n${Object.values(row).join(',')}`;
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'pachimart_row.csv';
+  link.click();
+};
+
   /* ---------- UI ---------- */
   return (
     <>
@@ -308,33 +325,79 @@ export default function AdminInventoryPage() {
             </thead>
             <tbody>
               {entries.map(row => (
-                <tr
-                  key={row.id}
-                  className="hover:bg-gray-50"
-                  onContextMenu={e => { e.preventDefault(); setContextMenu({ x: e.clientX, y: e.clientY, row }) }}
-                >
-                  {columns.filter(c => selectedColumns.includes(c.key)).map(c => (
-                    <td
-  key={c.key}
-  className={`px-2 py-1 border 
-    ${(c.key === 'installation' || c.key === 'type' || c.key === 'machine_name') ? '' : 'hidden sm:table-cell'}`}
->
-  {editingId === row.id
-    ? <Input
-        value={editForm[c.key] ?? ''}
-        onChange={e => setEditForm((p: any) => ({ ...p, [c.key]: e.target.value }))}
-      />
-    : c.key.includes('date') || c.key.includes('expiry')
-      ? dateFmt(row[c.key])
-      : String(row[c.key] ?? '-')}
-</td>
-                  ))}
-                  
-                </tr>
+                <tr key={row.id} className="hover:bg-gray-50" onContextMenu={e => { 
+  e.preventDefault(); 
+  setContextMenu({ x: e.clientX, y: e.clientY, row });
+}}>
+  {columns.filter(c => selectedColumns.includes(c.key)).map(c => (
+    <td
+      key={c.key}
+      className={`px-2 py-1 border ${
+        ['installation', 'type', 'machine_name'].includes(c.key) ? '' : 'hidden sm:table-cell'
+      }`}
+    >
+      {editingId === row.id
+        ? <Input
+            value={editForm[c.key] ?? ''}
+            onChange={e => setEditForm((p: any) => ({ ...p, [c.key]: e.target.value }))}
+          />
+        : c.key.includes('date') || c.key.includes('expiry')
+          ? dateFmt(row[c.key])
+          : String(row[c.key] ?? '-')}
+    </td>
+  ))}
+
+  {/* ✅ モバイル用：縦三点メニューを表示 */}
+  <td className="px-2 py-1 border text-right sm:hidden">
+    <button onClick={() => setMobileMenuRow(row)}>
+      <MoreVertical className="w-5 h-5" />
+    </button>
+  </td>
+</tr>
               ))}
             </tbody>
           </table>
         </div>
+
+{/* スマホメニューのボトムシート */}
+{mobileMenuRow && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-end sm:hidden">
+    <div className="bg-white w-full rounded-t-lg p-4 max-w-md">
+      <div className="text-center font-bold mb-2">操作メニュー</div>
+
+      <div className="flex flex-col gap-2">
+        <button
+          onClick={() => {
+            exportToPachimart(mobileMenuRow);
+            setMobileMenuRow(null);
+          }}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded"
+        >
+          <Upload className="w-4 h-4" />
+          パチマートへ出品
+        </button>
+
+        <button
+          onClick={() => {
+            exportToCSV(mobileMenuRow);
+            setMobileMenuRow(null);
+          }}
+          className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded"
+        >
+          <FileText className="w-4 h-4" />
+          CSV出力
+        </button>
+
+        <button
+          onClick={() => setMobileMenuRow(null)}
+          className="mt-2 text-sm text-gray-500"
+        >
+          閉じる
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
 
 /* ---------- 右クリックメニュー ---------- */
@@ -503,5 +566,7 @@ function MenuItem({
       {icon}
       <span>{label}</span>
     </li>
+  
   )
+  
 }
