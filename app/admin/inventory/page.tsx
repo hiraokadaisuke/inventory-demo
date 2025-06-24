@@ -389,7 +389,7 @@ const exportToCSV = (row: any) => {
 
         <button
           onClick={() => {
-            exportToPDF(mobileMenuRow); // ← ここだけ exportToPDF にしてね
+            exportToCSV(mobileMenuRow); // ← ここだけ exportToPDF にしてね
             setMobileMenuRow(null);
           }}
           className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-indigo-800 text-white text-sm rounded"
