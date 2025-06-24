@@ -283,8 +283,8 @@ export default function AdminInventoryPage() {
         </div>
 
         {/* データテーブル */}
-        <div className="w-full overflow-auto">
-          <table className="min-w-[1200px] text-sm border border-gray-300">
+        <div className="w-full overflow-x-auto">
+  <table className="w-full sm:min-w-[1200px] text-sm border border-gray-300">
             <thead className="bg-gray-100 text-xs select-none">
               <tr>
                 {columns.filter(c => selectedColumns.includes(c.key)).map(c => {
@@ -317,7 +317,7 @@ export default function AdminInventoryPage() {
                     <td
   key={c.key}
   className={`px-2 py-1 border 
-              ${(c.key === 'installation' || c.key === 'type' || c.key === 'machine_name') ? '' : 'hidden sm:table-cell'}`}
+    ${(c.key === 'installation' || c.key === 'type' || c.key === 'machine_name') ? '' : 'hidden sm:table-cell'}`}
 >
   {editingId === row.id
     ? <Input
