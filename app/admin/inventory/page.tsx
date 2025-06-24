@@ -325,10 +325,18 @@ const exportToCSV = (row: any) => {
             </thead>
             <tbody>
               {entries.map(row => (
-                <tr key={row.id} className="hover:bg-gray-50" onContextMenu={e => { 
-  e.preventDefault(); 
-  setContextMenu({ x: e.clientX, y: e.clientY, row });
-}}>
+                <tr
+  key={row.id}
+  className="hover:bg-gray-50 relative"
+  onContextMenu={e => {
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY, row });
+  }}
+  onClick={() => {
+    if (window.innerWidth < 640) setMobileMenuRow(row);   // スマホだけ行タップ
+  }}
+>
+  {/* 主要3列 + PC用隠し列 */}
   {columns.filter(c => selectedColumns.includes(c.key)).map(c => (
     <td
       key={c.key}
@@ -336,68 +344,72 @@ const exportToCSV = (row: any) => {
         ['installation', 'type', 'machine_name'].includes(c.key) ? '' : 'hidden sm:table-cell'
       }`}
     >
-      {editingId === row.id
-        ? <Input
-            value={editForm[c.key] ?? ''}
-            onChange={e => setEditForm((p: any) => ({ ...p, [c.key]: e.target.value }))}
-          />
-        : c.key.includes('date') || c.key.includes('expiry')
-          ? dateFmt(row[c.key])
-          : String(row[c.key] ?? '-')}
+      {editingId === row.id ? (
+        <Input
+          value={editForm[c.key] ?? ''}
+          onChange={e => setEditForm((p: Record<string, string>) => ({ ...p, [c.key]: e.target.value }))}
+
+        />
+      ) : c.key.includes('date') || c.key.includes('expiry')
+        ? dateFmt(row[c.key])
+        : String(row[c.key] ?? '-')}
     </td>
   ))}
 
-  {/* ✅ モバイル用：縦三点メニューを表示 */}
-  <td className="px-2 py-1 border text-right sm:hidden">
-    <button onClick={() => setMobileMenuRow(row)}>
-      <MoreVertical className="w-5 h-5" />
-    </button>
-  </td>
 </tr>
-              ))}
+  ))}
+
+  
             </tbody>
           </table>
         </div>
 
 {/* スマホメニューのボトムシート */}
 {mobileMenuRow && (
-  <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-end sm:hidden">
-    <div className="bg-white w-full rounded-t-lg p-4 max-w-md">
-      <div className="text-center font-bold mb-2">操作メニュー</div>
+  <div
+    className="fixed inset-0 z-50 flex justify-center items-end sm:hidden"
+    style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}
+  >
+    <div className="bg-white w-full rounded-t-lg p-4 max-w-md shadow-xl animate-slide-up">
+      <div className="text-center text-sm text-gray-600 mb-3 truncate">
+        {mobileMenuRow?.machine_name}
+      </div>
 
-      <div className="flex flex-col gap-2">
+      <div className="flex justify-around gap-2">
         <button
           onClick={() => {
             exportToPachimart(mobileMenuRow);
             setMobileMenuRow(null);
           }}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded"
+          className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-indigo-800 text-white text-sm rounded"
         >
           <Upload className="w-4 h-4" />
-          パチマートへ出品
+          出品
         </button>
 
         <button
           onClick={() => {
-            exportToCSV(mobileMenuRow);
+            exportToPDF(mobileMenuRow); // ← ここだけ exportToPDF にしてね
             setMobileMenuRow(null);
           }}
-          className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded"
+          className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-indigo-800 text-white text-sm rounded"
         >
           <FileText className="w-4 h-4" />
-          CSV出力
-        </button>
-
-        <button
-          onClick={() => setMobileMenuRow(null)}
-          className="mt-2 text-sm text-gray-500"
-        >
-          閉じる
+          PDF
         </button>
       </div>
+
+      <button
+        onClick={() => setMobileMenuRow(null)}
+        className="block mx-auto mt-3 text-sm text-gray-500"
+      >
+        閉じる
+      </button>
     </div>
   </div>
 )}
+
+
 
 
 /* ---------- 右クリックメニュー ---------- */
