@@ -6,6 +6,10 @@ import { supabase } from '@/lib/supabase'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import EditModal from '@/components/EditModal'
+import { Download, Upload, Pencil, Trash2 } from 'lucide-react'
+import { Package } from 'lucide-react'
+
+
 
 
 /* ---------------------------------------------
@@ -275,7 +279,7 @@ export default function AdminInventoryPage() {
 
         {/* 件数 */}
         <div className="flex justify-between items-center mb-1">
-          <div className="text-sm text-[#191970] font-medium">対象件数：{entries.length}件</div>
+          <div className="text-sm text-[#191970] font-medium">対象件数：{entries?.length ?? 0}件</div>
         </div>
 
         {/* データテーブル */}
@@ -288,15 +292,16 @@ export default function AdminInventoryPage() {
                     String(e[c.key] ?? '(空白セル)')))].sort()
                   return (
                     <th
-                      key={c.key}
-                      className="relative px-2 py-1 border text-left cursor-pointer hover:bg-gray-100"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        openFilterMenu(c.key, e.clientX, e.clientY, values)
-                      }}
-                    >
-                      {c.label}
-                    </th>
+  key={c.key}
+  className={`relative px-2 py-1 border text-left cursor-pointer hover:bg-gray-100 
+              ${(c.key === 'installation' || c.key === 'type' || c.key === 'machine_name') ? '' : 'hidden sm:table-cell'}`}
+  onClick={(e) => {
+    e.stopPropagation()
+    openFilterMenu(c.key, e.clientX, e.clientY, values)
+  }}
+>
+  {c.label}
+</th>
                   )
                 })}
               </tr>
@@ -309,16 +314,20 @@ export default function AdminInventoryPage() {
                   onContextMenu={e => { e.preventDefault(); setContextMenu({ x: e.clientX, y: e.clientY, row }) }}
                 >
                   {columns.filter(c => selectedColumns.includes(c.key)).map(c => (
-                    <td key={c.key} className="px-2 py-1 border">
-                      {editingId === row.id
-                        ? <Input
-                            value={editForm[c.key] ?? ''}
-                            onChange={e => setEditForm((p: any) => ({ ...p, [c.key]: e.target.value }))}
-                          />
-                        : c.key.includes('date') || c.key.includes('expiry')
-                          ? dateFmt(row[c.key])
-                          : String(row[c.key] ?? '-')}
-                    </td>
+                    <td
+  key={c.key}
+  className={`px-2 py-1 border 
+              ${(c.key === 'installation' || c.key === 'type' || c.key === 'machine_name') ? '' : 'hidden sm:table-cell'}`}
+>
+  {editingId === row.id
+    ? <Input
+        value={editForm[c.key] ?? ''}
+        onChange={e => setEditForm((p: any) => ({ ...p, [c.key]: e.target.value }))}
+      />
+    : c.key.includes('date') || c.key.includes('expiry')
+      ? dateFmt(row[c.key])
+      : String(row[c.key] ?? '-')}
+</td>
                   ))}
                   
                 </tr>
@@ -327,39 +336,64 @@ export default function AdminInventoryPage() {
           </table>
         </div>
 
-        {/* 右クリックメニュー */}
-        {contextMenu && (
+
+/* ---------- 右クリックメニュー ---------- */
+{contextMenu && (
   <ul
     style={{
       position: 'fixed',
       top: contextMenu.y,
       left: contextMenu.x,
       background: '#fff',
-      border: '1px solid #ccc',
+      border: '1px solid #ddd',
       padding: 4,
+      borderRadius: 4,
       zIndex: 9999,
-      boxShadow: '0 2px 6px rgba(0,0,0,.18)',
-      listStyle: 'none',
-      minWidth: 180,
+      boxShadow: '0 4px 12px rgba(0,0,0,.15)',
+      width: 220
     }}
     onContextMenu={(e) => e.preventDefault()}
   >
-    <MenuItem label="検定通知書の出力" onClick={() => { exportKentei(contextMenu.row); setContextMenu(null) }} />
-    <MenuItem label="中古遊技機確認書の出力" onClick={() => { exportConfirmation(contextMenu.row); setContextMenu(null) }} />
-    <MenuItem label="撤去明細書の出力" onClick={() => { exportRemoval(contextMenu.row); setContextMenu(null) }} />
-    <MenuItem label="パチマートへ出品" onClick={() => { exportToPachimart(contextMenu.row); setContextMenu(null) }} />
-    
+    {/* 共通の li コンポーネントでアイコン＋ラベル */}
+    <MenuItem
+      icon={<Download className="w-4 h-4" />}
+      label="検定通知書の出力"
+      onClick={() => { exportKentei(contextMenu.row); setContextMenu(null) }}
+    />
+    <MenuItem
+      icon={<Download className="w-4 h-4" />}
+      label="中古遊技機確認書の出力"
+      onClick={() => { exportConfirmation(contextMenu.row); setContextMenu(null) }}
+    />
+    <MenuItem
+      icon={<Download className="w-4 h-4" />}
+      label="撤去明細書の出力"
+      onClick={() => { exportRemoval(contextMenu.row); setContextMenu(null) }}
+    />
+    <MenuItem
+  icon={<Package className="w-4 h-4" />}
+  label="パチマートへ出品"
+  onClick={() => {
+    exportToPachimart(contextMenu.row)
+    setContextMenu(null)
+  }}
+/>
+
     <hr className="my-1" />
 
-<MenuItem label="編集" onClick={() => { handleEditClick(contextMenu.row); setContextMenu(null) }} />
     <MenuItem
+      icon={<Pencil className="w-4 h-4" />}
+      label="編集"
+      onClick={() => { handleEditClick(contextMenu.row); setContextMenu(null) }}
+    />
+    <MenuItem
+      icon={<Trash2 className="w-4 h-4 text-red-500" />}
       label="削除"
       onClick={() => { handleDelete(contextMenu.row); setContextMenu(null) }}
       className="text-red-600"
     />
   </ul>
-)
-}
+)}
 
 
         {/* フィルターダイアログ（省略＝元のまま） */}
@@ -450,20 +484,24 @@ export default function AdminInventoryPage() {
  * 共通メニュー項目コンポーネント
  * ---------------------------------------------------------------- */
 function MenuItem({
+  icon,
   label,
   onClick,
-  className = '',
+  className = ''
 }: {
+  icon: React.ReactNode
   label: string
   onClick: () => void
   className?: string
 }) {
   return (
     <li
-      className={`cursor-pointer px-3 py-[6px] hover:bg-gray-100 text-sm whitespace-nowrap ${className}`}
+      className={`flex items-center gap-2 px-3 py-2 cursor-pointer 
+                  hover:bg-gray-100 text-sm whitespace-nowrap ${className}`}
       onClick={onClick}
     >
-      {label}
+      {icon}
+      <span>{label}</span>
     </li>
   )
 }
