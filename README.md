@@ -48,17 +48,16 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 Use `/signup` to create an account and `/login` to access the app. After sign-up you will be redirected to `/setup` where you can register your profile. Completing setup creates a "メイン倉庫" record automatically.
 
-### OTP Login
+### Email & Password Signup
 
-Visit `/signup` and enter your email address to receive a one-time login link. The app
-uses Supabase `signInWithOtp` under the hood, so make sure the following
+Visit `/signup` to create an account using your email address and a password.
+Supabase's `signUp` method handles account creation, so ensure the following
 environment variables are configured (see `.env.example`):
 
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
-After clicking the link in the email, the session is authenticated and you will be
-redirected to `/setup` to complete your profile.
+After sign-up you will be redirected to `/setup` to complete your profile.
 
 ### FAQ
 
