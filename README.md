@@ -49,6 +49,13 @@ Use `/signup` to create an account and `/login` to access the app. After sign-up
 
 Basic usage tips and troubleshooting steps are available at `/faq`.
 
+### Error Pages
+
+Visiting `/404` or navigating to a non-existent route shows a 404 screen with
+the message "ページが見つかりません". The `/500` path displays
+"サーバーエラーが発生しました" and is also shown when an unhandled server error
+occurs.
+
 ---
 
 ### Running Tests
