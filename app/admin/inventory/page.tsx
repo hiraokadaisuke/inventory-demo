@@ -5,6 +5,7 @@ import Head from 'next/head'
 import { supabase } from '@/lib/supabase'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import Papa from 'papaparse'
 import EditModal from '@/components/EditModal'
 import ColumnPresetModal from '@/components/ColumnPresetModal'
 import { fetchLatestPreset, listPresets, deletePreset } from '@/lib/presets'
@@ -101,6 +102,7 @@ export default function AdminInventoryPage() {
   const [makerFilter, setMakerFilter] = useState('')
   const makerOptions =
     [...new Set(allEntries.map(e => e.maker).filter(Boolean))].sort()
+  const [tableSearch, setTableSearch] = useState('')
 
   /* ---------- プリセット読み込み ---------- */
   useEffect(() => {
@@ -165,12 +167,17 @@ export default function AdminInventoryPage() {
     const filtered = allEntries
       .filter(e => !makerFilter || e.maker === makerFilter)
       .filter(e =>
+        tableSearch === '' ||
+        e.machine_name?.toLowerCase().includes(tableSearch.toLowerCase()) ||
+        e.type?.toLowerCase().includes(tableSearch.toLowerCase())
+      )
+      .filter(e =>
         Object.entries(columnValueFilters).every(([k, set]) =>
           set.size === 0 ? true : set.has(String(e[k] ?? '(空白セル)')),
         ),
       )
     setEntries(filtered)
-  }, [allEntries, makerFilter, columnValueFilters])
+  }, [allEntries, makerFilter, columnValueFilters, tableSearch])
 
   /* ---------- CSV インポート ---------- */
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -275,6 +282,15 @@ export default function AdminInventoryPage() {
     setSearchText('')
   }
 
+  const toggleSort = (key: string) => {
+    if (sortColumn === key) {
+      setSortAsc(!sortAsc)
+    } else {
+      setSortColumn(key)
+      setSortAsc(true)
+    }
+  }
+
   // ダウンロード機能
 const exportToCSV = (row: any) => {
   const csv = `${Object.keys(row).join(',')}\n${Object.values(row).join(',')}`;
@@ -284,6 +300,25 @@ const exportToCSV = (row: any) => {
   link.download = 'pachimart_row.csv';
   link.click();
 };
+
+  const handleExportCsv = () => {
+    if (entries.length === 0) return
+    const rows = entries.map(r => {
+      const obj: Record<string, any> = {}
+      selectedColumns.forEach(k => {
+        obj[k] = r[k] ?? ''
+      })
+      return obj
+    })
+    const csv = Papa.unparse(rows)
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = 'inventory.csv'
+    link.click()
+    URL.revokeObjectURL(url)
+  }
 
   /* ---------- UI ---------- */
   return (
@@ -373,6 +408,18 @@ const exportToCSV = (row: any) => {
           >
             表示項目設定
           </Button>
+          <Input
+            placeholder="検索"
+            value={tableSearch}
+            onChange={e => setTableSearch(e.target.value)}
+            className="w-40"
+          />
+          <Button
+            onClick={handleExportCsv}
+            className="bg-[#191970] text-white hover:bg-[#15155d]"
+          >
+            CSV Export
+          </Button>
         </div>
 
         {/* 列選択 UI */}
@@ -408,16 +455,19 @@ const exportToCSV = (row: any) => {
                     String(e[c.key] ?? '(空白セル)')))].sort()
                   return (
                     <th
-  key={c.key}
-  className={`relative px-2 py-1 border text-left cursor-pointer hover:bg-gray-100 
-              ${(c.key === 'installation' || c.key === 'type' || c.key === 'machine_name') ? '' : 'hidden sm:table-cell'}`}
-  onClick={(e) => {
-    e.stopPropagation()
-    openFilterMenu(c.key, e.clientX, e.clientY, values)
-  }}
->
-  {c.label}
-</th>
+                      key={c.key}
+                      className={`relative px-2 py-1 border text-left cursor-pointer hover:bg-gray-100 ${(c.key === 'installation' || c.key === 'type' || c.key === 'machine_name') ? '' : 'hidden sm:table-cell'}`}
+                      onClick={() => toggleSort(c.key)}
+                      onContextMenu={e => {
+                        e.preventDefault()
+                        openFilterMenu(c.key, e.clientX, e.clientY, values)
+                      }}
+                    >
+                      {c.label}
+                      {sortColumn === c.key && (
+                        <span className="ml-1">{sortAsc ? '▲' : '▼'}</span>
+                      )}
+                    </th>
                   )
                 })}
               </tr>
