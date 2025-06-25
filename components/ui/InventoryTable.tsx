@@ -1,8 +1,24 @@
 // components/InventoryTable.tsx
 import { useState, useRef, useEffect } from 'react'
 
-export default function InventoryTable({ data }: { data: any[] }) {
-  const [contextMenu, setContextMenu] = useState<{ x: number, y: number, row: any } | null>(null)
+export type ColumnDef<T> = {
+  key: string
+  label: string
+  render?: (row: T) => React.ReactNode
+}
+
+export default function InventoryTable<T>({
+  data,
+  columns,
+  onEdit,
+}: {
+  data: T[]
+  columns: ColumnDef<T>[]
+  onEdit?: (row: T) => void
+}) {
+  const [contextMenu, setContextMenu] = useState<
+    { x: number; y: number; row: T } | null
+  >(null)
   const tableRef = useRef<HTMLTableElement>(null)
 
   // 外をクリックしたらメニューを閉じる
@@ -21,24 +37,39 @@ export default function InventoryTable({ data }: { data: any[] }) {
 
   return (
     <div style={{ position: 'relative' }}>
-      <table ref={tableRef}>
+      <table ref={tableRef} className="w-full">
         <thead>
           <tr>
-            <th>機種名</th>
-            <th>型式</th>
-            <th>メーカー</th>
+            {columns.map((c) => (
+              <th key={c.key} className="px-2 py-1 text-left">
+                {c.label}
+              </th>
+            ))}
+            {onEdit && <th className="px-2 py-1" />}
           </tr>
         </thead>
         <tbody>
-          {data.map((row) => (
+          {data.map((row: T) => (
             <tr
-              key={row.id}
+              key={(row as any).id}
               onContextMenu={(e) => handleContextMenu(e, row)}
-              className="select-none"
+              className="select-none hover:bg-gray-50"
             >
-              <td>{row.machine_name}</td>
-              <td>{row.type}</td>
-              <td>{row.maker}</td>
+              {columns.map((c) => (
+                <td key={c.key} className="border px-2 py-1">
+                  {c.render ? c.render(row) : (row as any)[c.key]}
+                </td>
+              ))}
+              {onEdit && (
+                <td className="border px-2 py-1 text-center">
+                  <button
+                    onClick={() => onEdit(row)}
+                    className="text-blue-600 hover:underline"
+                  >
+                    編集
+                  </button>
+                </td>
+              )}
             </tr>
           ))}
         </tbody>

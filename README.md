@@ -49,3 +49,13 @@ Use `/signup` to create an account and `/login` to access the app. After sign-up
 
 Basic usage tips and troubleshooting steps are available at `/faq`.
 
+---
+
+### Running Tests
+
+Install dependencies with `npm install` so Jest and other packages are available.  
+Then run the test suite using:
+
+```bash
+npm test
+
