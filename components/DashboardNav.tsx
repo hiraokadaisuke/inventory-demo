@@ -15,15 +15,7 @@ export default function DashboardNav() {
 
   return (
     <nav className="flex items-center gap-4 p-4 border-b bg-gray-50">
-      <Link href="/admin/inventory" className="font-semibold">
-        在庫
-      </Link>
-      <Link href="/warehouses" className="font-semibold">
-        倉庫
-      </Link>
-      <Link href="/settings/account" className="font-semibold">
-        アカウント設定
-      </Link>
+
       <div className="flex-1" />
     
     </nav>
