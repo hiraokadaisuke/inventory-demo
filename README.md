@@ -72,3 +72,13 @@ npm test
 
 The command launches Jest and prints the test results.
 
+### Linting
+
+Run the linter to check code style and catch errors:
+
+```bash
+npm run lint
+```
+
+This command uses ESLint with the Next.js configuration.
+
