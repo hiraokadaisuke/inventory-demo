@@ -1,5 +1,4 @@
 import './globals.css'
-import Head from 'next/head'
 
 export const metadata = {
   title: '在庫管理ソフト',
@@ -13,9 +12,6 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ja">
-      <Head>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
       <body suppressHydrationWarning>
         {children}
       </body>
