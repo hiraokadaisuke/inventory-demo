@@ -48,6 +48,8 @@ const columns = [
   { key: 'sell_unit_price',      label: '売却単価' },
   { key: 'sell_total_price',     label: '売却金額' },
   { key: 'status',               label: '状況' },
+  { key: 'warehouse_id',        label: '倉庫' },
+  { key: 'quantity',            label: '数量' },
   { key: 'note',                 label: '備考' },
 ]
 
@@ -133,7 +135,7 @@ export default function AdminInventoryPage() {
 
     let query: any = supabase
       .from('inventory')
-      .select('*')
+      .select('*, warehouses(name)')
       .eq('user_id', user.id)
     if (sortColumn) query = query.order(sortColumn, { ascending: sortAsc })
     const { data, error } = await query
@@ -508,9 +510,10 @@ const exportToCSV = (row: any) => {
         <Input
           value={editForm[c.key] ?? ''}
           onChange={e => setEditForm((p: Record<string, string>) => ({ ...p, [c.key]: e.target.value }))}
-
         />
-      ) : c.key.includes('date') || c.key.includes('expiry')
+      ) : c.key === 'warehouse_id'
+        ? row.warehouses?.name ?? '-'
+        : c.key.includes('date') || c.key.includes('expiry')
         ? dateFmt(row[c.key])
         : String(row[c.key] ?? '-')}
     </td>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -14,6 +14,7 @@ const initialForm = {
   removal_date: '', elapsed_years: '', purchase_flag: '', usage_count: '',
   purchase_unit_price: '', purchase_total_price: '', sell_date: '', buyer: '',
   sell_unit_price: '', sell_total_price: '', status: '', note: '', pdf_url: '',
+  warehouse_id: '', quantity: '',
 }
 
 const fieldLabels: { [key: string]: string } = {
@@ -24,7 +25,8 @@ const fieldLabels: { [key: string]: string } = {
   removal_date: '撤去日', elapsed_years: '経過年数', purchase_flag: '購入',
   usage_count: '使用次', purchase_unit_price: '購入単価', purchase_total_price: '購入金額',
   sell_date: '売却日', buyer: '売却先', sell_unit_price: '売却単価',
-  sell_total_price: '売却金額', status: '状況', note: '備考', pdf_url: 'PDFファイルURL'
+  sell_total_price: '売却金額', status: '状況', note: '備考', pdf_url: 'PDFファイルURL',
+  warehouse_id: '倉庫', quantity: '数量'
 }
 
 const selectOptions: { [key: string]: string[] } = {
@@ -33,8 +35,23 @@ const selectOptions: { [key: string]: string[] } = {
 
 export default function InventoryInputOnly() {
   const [formData, setFormData] = useState(initialForm)
+  const [warehouses, setWarehouses] = useState<any[]>([])
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  useEffect(() => {
+    supabase.auth.getUser().then(async ({ data }) => {
+      const userId = data.user?.id
+      if (!userId) return
+      const { data: ws } = await supabase
+        .from('warehouses')
+        .select('*')
+        .eq('user_id', userId)
+      setWarehouses(ws || [])
+    })
+  }, [])
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+  ) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
   }
@@ -116,7 +133,19 @@ export default function InventoryInputOnly() {
           {Object.entries(initialForm).map(([key]) => (
             <div key={key}>
               <Label className="text-sm mb-1 block">{fieldLabels[key] || key}</Label>
-              {selectOptions[key] ? (
+              {key === 'warehouse_id' ? (
+                <select
+                  name="warehouse_id"
+                  value={formData.warehouse_id}
+                  onChange={handleChange}
+                  className="border border-gray-300 rounded px-2 py-1 w-full"
+                >
+                  <option value="">選択してください</option>
+                  {warehouses.map(w => (
+                    <option key={w.id} value={w.id}>{w.name}</option>
+                  ))}
+                </select>
+              ) : selectOptions[key] ? (
                 <select
                   name={key}
                   value={formData[key as keyof typeof formData] ?? ''}
@@ -131,7 +160,7 @@ export default function InventoryInputOnly() {
               ) : (
                 <Input
                   name={key}
-                  type={key.includes('date') ? 'date' : 'text'}
+                  type={key.includes('date') ? 'date' : key === 'quantity' ? 'number' : 'text'}
                   value={formData[key as keyof typeof formData] ?? ''}
                   onChange={handleChange}
                 />
