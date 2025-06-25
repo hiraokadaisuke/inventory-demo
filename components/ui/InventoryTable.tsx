@@ -1,3 +1,4 @@
+"use client";
 // components/InventoryTable.tsx
 import { useState, useRef, useEffect } from 'react'
 
