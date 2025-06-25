@@ -36,7 +36,7 @@ export default function OCRUploader({ setFormData }: Props) {
       const {
         maker,
         machine_name,
-        inspection_date,
+        certificate_date,
         board_serial,
         frame_serial,
         main_board,
@@ -47,7 +47,7 @@ export default function OCRUploader({ setFormData }: Props) {
         ...prev,
         maker,
         machine_name,
-        inspection_date,
+        certificate_date,
         board_serial,
         frame_serial,
         main_board_serial: main_board,
