@@ -9,6 +9,15 @@ describe('rowsToCsv', () => {
     const csv = rowsToCsv(rows)
     expect(csv).toBe('a,b\r\n1,2\r\n3,4')
   })
+
+  it('handles fields with commas and quotes', () => {
+    const rows = [
+      { name: 'Widget, Type A', desc: 'The "best" widget' },
+      { name: 'Simple', desc: 'Just ok' },
+    ]
+    const csv = rowsToCsv(rows)
+    expect(csv).toBe('name,desc\r\n"Widget, Type A","The ""best"" widget"\r\nSimple,Just ok')
+  })
 })
 
 describe('formatDateJP', () => {
@@ -22,5 +31,10 @@ describe('formatDateJP', () => {
 
   it('returns original value for invalid dates', () => {
     expect(formatDateJP('not-a-date')).toBe('not-a-date')
+  })
+
+  it('handles Date objects', () => {
+    const date = new Date('2025-06-25')
+    expect(formatDateJP(date)).toBe('2025/6/25')
   })
 })
