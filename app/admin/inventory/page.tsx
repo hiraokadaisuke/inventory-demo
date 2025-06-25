@@ -239,7 +239,7 @@ const exportToCSV = (row: any) => {
         <div className="flex flex-wrap items-center gap-2 mb-4">
           <Button
             onClick={() => document.getElementById('csv-hidden-input')?.click()}
-            className="bg-[#191970] text-white hover:bg-[#15155d]"
+            className="bg-[#191970] text-white hover:bg-[#15155d] hidden sm:inline-flex"
           >
             一括CSV登録
           </Button>
@@ -261,7 +261,7 @@ const exportToCSV = (row: any) => {
 
           <Button
             onClick={() => setShowFilters(!showFilters)}
-            className="bg-[#191970] text-white hover:bg-[#15155d]"
+            className="bg-[#191970] text-white hover:bg-[#15155d] hidden sm:inline-flex"
           >
             項目を絞り込む
           </Button>
