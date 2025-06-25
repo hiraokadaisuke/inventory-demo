@@ -61,7 +61,7 @@ export default function AdminInventoryPage() {
   const [showFilters, setShowFilters]         = useState(false)
   const [selectedColumns, setSelectedColumns] = useState<string[]>(columns.map(c => c.key))
   const [showModal, setShowModal] = useState(false)         // モーダルを開く状態
-　const [editTarget, setEditTarget] = useState<any>()       // 編集したいデータ
+  const [editTarget, setEditTarget] = useState<any>() // 編集したいデータ
   const [mobileMenuRow, setMobileMenuRow] = useState<any | null>(null)
   
 
