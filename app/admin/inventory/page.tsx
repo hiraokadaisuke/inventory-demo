@@ -6,7 +6,7 @@ import Head from 'next/head'
 import { supabase } from '@/lib/supabase'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import Papa from 'papaparse'
+import { downloadCsv } from '@/lib/utils'
 import EditModal from '@/components/EditModal'
 import ColumnPresetModal from '@/components/ColumnPresetModal'
 import { fetchLatestPreset, listPresets, deletePreset } from '@/lib/presets'
@@ -297,12 +297,7 @@ export default function AdminInventoryPage() {
 
   // ダウンロード機能
 const exportToCSV = (row: any) => {
-  const csv = `${Object.keys(row).join(',')}\n${Object.values(row).join(',')}`;
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = 'pachimart_row.csv';
-  link.click();
+  downloadCsv([row], 'pachimart_row.csv');
 };
 
   const handleExportCsv = () => {
@@ -314,14 +309,7 @@ const exportToCSV = (row: any) => {
       })
       return obj
     })
-    const csv = Papa.unparse(rows)
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = 'inventory.csv'
-    link.click()
-    URL.revokeObjectURL(url)
+    downloadCsv(rows, 'inventory.csv')
   }
 
   /* ---------- UI ---------- */
