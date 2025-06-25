@@ -40,10 +40,20 @@ export default function InventoryInputOnly() {
   }
 
   const handleAdd = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      alert('ログイン情報を取得できません')
+      return
+    }
+
     const payload = Object.fromEntries(
       Object.entries(formData).map(([k, v]) => [k, v === '' ? null : v])
     )
-    const { error } = await supabase.from('inventory').insert([payload])
+
+    const { error } = await supabase
+      .from('inventory')
+      .insert([{ ...payload, user_id: user.id }])
+
     if (error) {
       alert('保存に失敗しました')
       console.error(error)

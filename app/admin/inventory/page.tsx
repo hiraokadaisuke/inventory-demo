@@ -91,7 +91,16 @@ export default function AdminInventoryPage() {
 
   /* ---------- データ取得 ---------- */
   const fetchData = async () => {
-    let query: any = supabase.from('inventory').select('*')
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      setAllEntries([])
+      return
+    }
+
+    let query: any = supabase
+      .from('inventory')
+      .select('*')
+      .eq('user_id', user.id)
     if (sortColumn) query = query.order(sortColumn, { ascending: sortAsc })
     const { data, error } = await query
     if (!error && data) setAllEntries(data)
@@ -99,13 +108,22 @@ export default function AdminInventoryPage() {
   useEffect(() => { fetchData() }, [sortColumn, sortAsc])
 
   const saveRow = async (data: any) => {
-  if (data.id) {
-    // idがある → 既存行 → 更新
-    await supabase.from('inventory').update(data).eq('id', data.id)
-  } else {
-    // idがない → 新規登録（今回は編集だけなので通常使わない）
-    await supabase.from('inventory').insert(data)
-  }
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    if (data.id) {
+      // idがある → 既存行 → 更新
+      await supabase
+        .from('inventory')
+        .update(data)
+        .eq('id', data.id)
+        .eq('user_id', user.id)
+    } else {
+      // idがない → 新規登録（今回は編集だけなので通常使わない）
+      await supabase
+        .from('inventory')
+        .insert([{ ...data, user_id: user.id }])
+    }
 
   setShowModal(false)  // モーダルを閉じる
   fetchData()          // 表を再読み込み
@@ -130,6 +148,9 @@ export default function AdminInventoryPage() {
     if (!file) return
 
     try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('ログイン情報を取得できません')
+
       const text = await file.text()
       const rows = text.trim().split('\n')
       const headers = rows[0].split(',')
@@ -138,7 +159,9 @@ export default function AdminInventoryPage() {
         return Object.fromEntries(headers.map((h, i) => [h, values[i] || null]))
       })
 
-      const { error } = await supabase.from('inventory').insert(data)
+      const rowsWithUser = data.map(d => ({ ...d, user_id: user.id }))
+
+      const { error } = await supabase.from('inventory').insert(rowsWithUser)
       if (error) throw error
       alert('CSVインポート完了')
       fetchData()
@@ -153,7 +176,13 @@ export default function AdminInventoryPage() {
   /* ---------- 行操作 ---------- */
   const handleDelete = async (row: any) => {
     if (!window.confirm('本当に削除しますか？')) return
-    await supabase.from('inventory').delete().eq('id', row.id)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    await supabase
+      .from('inventory')
+      .delete()
+      .eq('id', row.id)
+      .eq('user_id', user.id)
     fetchData()
   }
   const handleEditClick = (row: any) => {
@@ -163,7 +192,13 @@ export default function AdminInventoryPage() {
 
   const handleEdit     = (row: any) => { setEditingId(row.id); setEditForm(row) }
   const handleSave     = async () => {
-    await supabase.from('inventory').update(editForm).eq('id', editingId)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    await supabase
+      .from('inventory')
+      .update(editForm)
+      .eq('id', editingId)
+      .eq('user_id', user.id)
     setEditingId(null)
     fetchData()
   }
