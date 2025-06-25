@@ -1,3 +1,4 @@
+"use client";
 import { Dialog } from '@headlessui/react'
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
