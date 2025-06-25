@@ -14,7 +14,7 @@ export default function SignupPage() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      if (data.user) router.replace('/admin/inventory')
+      if (data.user) router.replace('/inventory')
     })
   }, [router])
 
@@ -26,6 +26,7 @@ export default function SignupPage() {
       setError(error.message)
     } else {
       setMessage('メールを確認してください')
+      router.replace('/setup') // ここでsetupページへ遷移
     }
   }
 
@@ -40,7 +41,9 @@ export default function SignupPage() {
         value={email}
         onChange={e => setEmail(e.target.value)}
       />
-      <Button className="w-full" onClick={handleSignup}>登録用リンクを送信</Button>
+      <Button className="w-full" onClick={handleSignup}>
+        登録用リンクを送信
+      </Button>
     </div>
   )
 }
