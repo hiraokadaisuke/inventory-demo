@@ -13,7 +13,9 @@ export default function TestPage() {
   const handleContextMenu = (e: React.MouseEvent, row: any) => {
     e.preventDefault()
     console.log('右クリック検知:', row)
-    setContextMenu({ x: e.clientX, y: e.clientY, row })
+    if (window.innerWidth >= 640) {
+      setContextMenu({ x: e.clientX, y: e.clientY, row })
+    }
   }
 
   useEffect(() => {
@@ -33,7 +35,11 @@ export default function TestPage() {
         </thead>
         <tbody>
           {sampleData.map((row) => (
-            <tr key={row.id} onContextMenu={(e) => handleContextMenu(e, row)} className="border hover:bg-gray-100">
+            <tr
+              key={row.id}
+              onContextMenu={(e) => handleContextMenu(e, row)}
+              className="border hover:bg-gray-100 select-none"
+            >
               <td className="border p-2">{row.name}</td>
               <td className="border p-2">{row.maker}</td>
             </tr>

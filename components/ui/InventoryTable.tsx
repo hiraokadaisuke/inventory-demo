@@ -14,7 +14,9 @@ export default function InventoryTable({ data }: { data: any[] }) {
 
   const handleContextMenu = (e: React.MouseEvent, row: any) => {
     e.preventDefault()
-    setContextMenu({ x: e.clientX, y: e.clientY, row })
+    if (window.innerWidth >= 640) {
+      setContextMenu({ x: e.clientX, y: e.clientY, row })
+    }
   }
 
   return (
@@ -29,7 +31,11 @@ export default function InventoryTable({ data }: { data: any[] }) {
         </thead>
         <tbody>
           {data.map((row) => (
-            <tr key={row.id} onContextMenu={(e) => handleContextMenu(e, row)}>
+            <tr
+              key={row.id}
+              onContextMenu={(e) => handleContextMenu(e, row)}
+              className="select-none"
+            >
               <td>{row.machine_name}</td>
               <td>{row.type}</td>
               <td>{row.maker}</td>
