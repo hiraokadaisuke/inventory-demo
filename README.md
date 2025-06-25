@@ -53,9 +53,12 @@ Basic usage tips and troubleshooting steps are available at `/faq`.
 
 ### Running Tests
 
-Install dependencies with `npm install` so Jest and other packages are available.  
+Install dependencies with `npm install` so Jest and other packages are available.
 Then run the test suite using:
 
 ```bash
 npm test
+```
+
+The command launches Jest and prints the test results.
 
