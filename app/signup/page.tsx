@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { translateAuthError } from '@/lib/authErrors'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 
@@ -22,7 +23,7 @@ export default function SignupPage() {
     setError(null)
     const { error } = await supabase.auth.signUp({ email, password })
     if (error) {
-      setError(error.message)
+      setError(translateAuthError(error.message))
     } else {
       router.replace('/setup')
     }
