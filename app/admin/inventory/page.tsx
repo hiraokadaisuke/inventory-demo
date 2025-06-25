@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Head from 'next/head'
 import { supabase } from '@/lib/supabase'
 import { Input } from '@/components/ui/input'
@@ -54,6 +55,7 @@ const columns = [
  * ------------------------------------------- */
 export default function AdminInventoryPage() {
   /* ---------- 状態 ---------- */
+  const router = useRouter()
   const [allEntries, setAllEntries]           = useState<any[]>([])
   const [entries, setEntries]                 = useState<any[]>([])
   const [editingId, setEditingId]             = useState<number | null>(null)
@@ -317,12 +319,19 @@ const exportToCSV = (row: any) => {
             className="hidden"
           />
 
-          <Button
-            onClick={() => window.open('/admin/inventory/input', '_blank')}
-            className="bg-[#191970] text-white hover:bg-[#15155d]"
-          >
-            個別登録
-          </Button>
+            <Button
+              onClick={() => window.open('/admin/inventory/input', '_blank')}
+              className="bg-[#191970] text-white hover:bg-[#15155d]"
+            >
+              個別登録
+            </Button>
+
+            <Button
+              onClick={() => router.push('/warehouses')}
+              className="bg-[#191970] text-white hover:bg-[#15155d]"
+            >
+              倉庫一覧
+            </Button>
 
           <Button
             onClick={() => setShowFilters(!showFilters)}
