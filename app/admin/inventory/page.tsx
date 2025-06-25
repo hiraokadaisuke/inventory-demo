@@ -1,10 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Head from 'next/head'
 import { supabase } from '@/lib/supabase'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import Papa from 'papaparse'
 import EditModal from '@/components/EditModal'
 import ColumnPresetModal from '@/components/ColumnPresetModal'
 import { fetchLatestPreset, listPresets, deletePreset } from '@/lib/presets'
@@ -46,6 +48,8 @@ const columns = [
   { key: 'sell_unit_price',      label: '売却単価' },
   { key: 'sell_total_price',     label: '売却金額' },
   { key: 'status',               label: '状況' },
+  { key: 'warehouse_id',        label: '倉庫' },
+  { key: 'quantity',            label: '数量' },
   { key: 'note',                 label: '備考' },
 ]
 
@@ -54,6 +58,7 @@ const columns = [
  * ------------------------------------------- */
 export default function AdminInventoryPage() {
   /* ---------- 状態 ---------- */
+  const router = useRouter()
   const [allEntries, setAllEntries]           = useState<any[]>([])
   const [entries, setEntries]                 = useState<any[]>([])
   const [editingId, setEditingId]             = useState<number | null>(null)
@@ -101,6 +106,7 @@ export default function AdminInventoryPage() {
   const [makerFilter, setMakerFilter] = useState('')
   const makerOptions =
     [...new Set(allEntries.map(e => e.maker).filter(Boolean))].sort()
+  const [tableSearch, setTableSearch] = useState('')
 
   /* ---------- プリセット読み込み ---------- */
   useEffect(() => {
@@ -129,7 +135,7 @@ export default function AdminInventoryPage() {
 
     let query: any = supabase
       .from('inventory')
-      .select('*')
+      .select('*, warehouses(name)')
       .eq('user_id', user.id)
     if (sortColumn) query = query.order(sortColumn, { ascending: sortAsc })
     const { data, error } = await query
@@ -165,12 +171,17 @@ export default function AdminInventoryPage() {
     const filtered = allEntries
       .filter(e => !makerFilter || e.maker === makerFilter)
       .filter(e =>
+        tableSearch === '' ||
+        e.machine_name?.toLowerCase().includes(tableSearch.toLowerCase()) ||
+        e.type?.toLowerCase().includes(tableSearch.toLowerCase())
+      )
+      .filter(e =>
         Object.entries(columnValueFilters).every(([k, set]) =>
           set.size === 0 ? true : set.has(String(e[k] ?? '(空白セル)')),
         ),
       )
     setEntries(filtered)
-  }, [allEntries, makerFilter, columnValueFilters])
+  }, [allEntries, makerFilter, columnValueFilters, tableSearch])
 
   /* ---------- CSV インポート ---------- */
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -275,6 +286,15 @@ export default function AdminInventoryPage() {
     setSearchText('')
   }
 
+  const toggleSort = (key: string) => {
+    if (sortColumn === key) {
+      setSortAsc(!sortAsc)
+    } else {
+      setSortColumn(key)
+      setSortAsc(true)
+    }
+  }
+
   // ダウンロード機能
 const exportToCSV = (row: any) => {
   const csv = `${Object.keys(row).join(',')}\n${Object.values(row).join(',')}`;
@@ -284,6 +304,25 @@ const exportToCSV = (row: any) => {
   link.download = 'pachimart_row.csv';
   link.click();
 };
+
+  const handleExportCsv = () => {
+    if (entries.length === 0) return
+    const rows = entries.map(r => {
+      const obj: Record<string, any> = {}
+      selectedColumns.forEach(k => {
+        obj[k] = r[k] ?? ''
+      })
+      return obj
+    })
+    const csv = Papa.unparse(rows)
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = 'inventory.csv'
+    link.click()
+    URL.revokeObjectURL(url)
+  }
 
   /* ---------- UI ---------- */
   return (
@@ -317,12 +356,19 @@ const exportToCSV = (row: any) => {
             className="hidden"
           />
 
-          <Button
-            onClick={() => window.open('/admin/inventory/input', '_blank')}
-            className="bg-[#191970] text-white hover:bg-[#15155d]"
-          >
-            個別登録
-          </Button>
+            <Button
+              onClick={() => window.open('/admin/inventory/input', '_blank')}
+              className="bg-[#191970] text-white hover:bg-[#15155d]"
+            >
+              個別登録
+            </Button>
+
+            <Button
+              onClick={() => router.push('/warehouses')}
+              className="bg-[#191970] text-white hover:bg-[#15155d]"
+            >
+              倉庫一覧
+            </Button>
 
           <Button
             onClick={() => setShowFilters(!showFilters)}
@@ -373,6 +419,18 @@ const exportToCSV = (row: any) => {
           >
             表示項目設定
           </Button>
+          <Input
+            placeholder="検索"
+            value={tableSearch}
+            onChange={e => setTableSearch(e.target.value)}
+            className="w-40"
+          />
+          <Button
+            onClick={handleExportCsv}
+            className="bg-[#191970] text-white hover:bg-[#15155d]"
+          >
+            CSV Export
+          </Button>
         </div>
 
         {/* 列選択 UI */}
@@ -408,16 +466,19 @@ const exportToCSV = (row: any) => {
                     String(e[c.key] ?? '(空白セル)')))].sort()
                   return (
                     <th
-  key={c.key}
-  className={`relative px-2 py-1 border text-left cursor-pointer hover:bg-gray-100 
-              ${(c.key === 'installation' || c.key === 'type' || c.key === 'machine_name') ? '' : 'hidden sm:table-cell'}`}
-  onClick={(e) => {
-    e.stopPropagation()
-    openFilterMenu(c.key, e.clientX, e.clientY, values)
-  }}
->
-  {c.label}
-</th>
+                      key={c.key}
+                      className={`relative px-2 py-1 border text-left cursor-pointer hover:bg-gray-100 ${(c.key === 'installation' || c.key === 'type' || c.key === 'machine_name') ? '' : 'hidden sm:table-cell'}`}
+                      onClick={() => toggleSort(c.key)}
+                      onContextMenu={e => {
+                        e.preventDefault()
+                        openFilterMenu(c.key, e.clientX, e.clientY, values)
+                      }}
+                    >
+                      {c.label}
+                      {sortColumn === c.key && (
+                        <span className="ml-1">{sortAsc ? '▲' : '▼'}</span>
+                      )}
+                    </th>
                   )
                 })}
               </tr>
@@ -449,9 +510,10 @@ const exportToCSV = (row: any) => {
         <Input
           value={editForm[c.key] ?? ''}
           onChange={e => setEditForm((p: Record<string, string>) => ({ ...p, [c.key]: e.target.value }))}
-
         />
-      ) : c.key.includes('date') || c.key.includes('expiry')
+      ) : c.key === 'warehouse_id'
+        ? row.warehouses?.name ?? '-'
+        : c.key.includes('date') || c.key.includes('expiry')
         ? dateFmt(row[c.key])
         : String(row[c.key] ?? '-')}
     </td>
