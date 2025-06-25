@@ -45,3 +45,12 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 Use `/signup` to create an account and `/login` to access the app. After sign-up you will be redirected to `/setup` where you can register your profile. Completing setup creates a "メイン倉庫" record automatically.
 
+
+### Running Tests
+
+Install dependencies with `npm install` so Jest and other packages are available.
+Then run the test suite using:
+
+```bash
+npm test
+```
