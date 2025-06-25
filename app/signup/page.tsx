@@ -14,7 +14,7 @@ export default function SignupPage() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      if (data.user) router.replace('/inventory')
+      if (data.user) router.replace('/admin/inventory')
     })
   }, [router])
 
@@ -26,7 +26,7 @@ export default function SignupPage() {
       setError(error.message)
     } else {
       setMessage('メールを確認してください')
-      router.replace('/setup') // ここでsetupページへ遷移
+      router.replace('/admin/inventory')
     }
   }
 
