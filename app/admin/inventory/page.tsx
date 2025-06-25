@@ -6,6 +6,8 @@ import { supabase } from '@/lib/supabase'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import EditModal from '@/components/EditModal'
+import ColumnPresetModal from '@/components/ColumnPresetModal'
+import { fetchLatestPreset, listPresets, deletePreset } from '@/lib/presets'
 import { Download,  Pencil, Trash2 } from 'lucide-react'
 import { Package } from 'lucide-react'
 import { MoreVertical } from 'lucide-react';
@@ -63,6 +65,17 @@ export default function AdminInventoryPage() {
   const [showModal, setShowModal] = useState(false)         // モーダルを開く状態
   const [editTarget, setEditTarget] = useState<any>() // 編集したいデータ
   const [mobileMenuRow, setMobileMenuRow] = useState<any | null>(null)
+  const [showPresetModal, setShowPresetModal] = useState(false)
+  const [presets, setPresets] = useState<any[]>([])
+  const [selectedPreset, setSelectedPreset] = useState<number | null>(null)
+
+  const reloadPresets = async () => {
+    const { data } = await supabase.auth.getSession()
+    const userId = data.session?.user.id
+    if (!userId) return
+    const list = await listPresets(userId)
+    setPresets(list)
+  }
   
 
 
@@ -88,6 +101,23 @@ export default function AdminInventoryPage() {
   const [makerFilter, setMakerFilter] = useState('')
   const makerOptions =
     [...new Set(allEntries.map(e => e.maker).filter(Boolean))].sort()
+
+  /* ---------- プリセット読み込み ---------- */
+  useEffect(() => {
+    const load = async () => {
+      const { data } = await supabase.auth.getSession()
+      const userId = data.session?.user.id
+      if (!userId) return
+      const latest = await fetchLatestPreset(userId)
+      if (latest) {
+        setSelectedPreset(latest.id)
+        if (latest.visible_columns) setSelectedColumns(latest.visible_columns)
+      }
+      const list = await listPresets(userId)
+      setPresets(list)
+    }
+    load()
+  }, [])
 
   /* ---------- データ取得 ---------- */
   const fetchData = async () => {
@@ -274,6 +304,40 @@ const exportToCSV = (row: any) => {
             <option value="">メーカー指定なし</option>
             {makerOptions.map(m => <option key={m}>{m}</option>)}
           </select>
+
+          <select
+            value={selectedPreset ?? ''}
+            onChange={e => {
+              const id = Number(e.target.value)
+              setSelectedPreset(id || null)
+              const p = presets.find(pr => pr.id === id)
+              if (p) setSelectedColumns(p.visible_columns)
+            }}
+            className="border px-3 py-[6px] h-[38px] rounded"
+          >
+            <option value="">プリセット選択</option>
+            {presets.map(p => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+          <Button
+            variant="ghost"
+            disabled={!selectedPreset}
+            onClick={async () => {
+              if (!selectedPreset) return
+              await deletePreset(selectedPreset)
+              setPresets(prev => prev.filter(p => p.id !== selectedPreset))
+              setSelectedPreset(null)
+            }}
+          >
+            削除
+          </Button>
+          <Button
+            onClick={() => setShowPresetModal(true)}
+            className="bg-[#191970] text-white hover:bg-[#15155d]"
+          >
+            表示項目設定
+          </Button>
         </div>
 
         {/* 列選択 UI */}
@@ -552,6 +616,14 @@ const exportToCSV = (row: any) => {
   onClose={() => setShowModal(false)}
   onSave={saveRow}
   data={editTarget}
+/>
+
+<ColumnPresetModal
+  isOpen={showPresetModal}
+  onClose={() => setShowPresetModal(false)}
+  columns={columns}
+  initialSelected={selectedColumns}
+  onSaved={reloadPresets}
 />
 
     </>
