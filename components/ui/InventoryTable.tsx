@@ -31,7 +31,7 @@ export default function InventoryTable({ data }: { data: any[] }) {
           {data.map((row) => (
             <tr key={row.id} onContextMenu={(e) => handleContextMenu(e, row)}>
               <td>{row.machine_name}</td>
-              <td>{row.model}</td>
+              <td>{row.type}</td>
               <td>{row.maker}</td>
             </tr>
           ))}
