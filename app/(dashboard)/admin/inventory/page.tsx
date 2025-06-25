@@ -6,13 +6,16 @@ import Head from 'next/head'
 import { supabase } from '@/lib/supabase'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import Link from 'next/link'
+import Logo from '@/components/Logo'
+import WarehouseSelect from '@/components/WarehouseSelect'
+import ColumnSettingsDialog from '@/components/ColumnSettingsDialog'
 import { downloadCsv } from '@/lib/utils'
 import EditModal from '@/components/EditModal'
 import ColumnPresetModal from '@/components/ColumnPresetModal'
 import { fetchLatestPreset, listPresets, deletePreset } from '@/lib/presets'
-import { Download,  Pencil, Trash2 } from 'lucide-react'
+import { Download, Pencil, Trash2 } from 'lucide-react'
 import { Package } from 'lucide-react'
-import { MoreVertical } from 'lucide-react';
 import { Upload, FileText } from 'lucide-react'
 import { formatDateJP } from '@/lib/utils'
 import SettingsMenu from "@/components/ui/SettingsMenu"
@@ -185,36 +188,7 @@ export default function AdminInventoryPage() {
     setEntries(filtered)
   }, [allEntries, makerFilter, columnValueFilters, tableSearch])
 
-  /* ---------- CSV インポート ---------- */
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
 
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('ログイン情報を取得できません')
-
-      const text = await file.text()
-      const rows = text.trim().split('\n')
-      const headers = rows[0].split(',')
-      const data = rows.slice(1).map(row => {
-        const values = row.split(',')
-        return Object.fromEntries(headers.map((h, i) => [h, values[i] || null]))
-      })
-
-      const rowsWithUser = data.map(d => ({ ...d, user_id: user.id }))
-
-      const { error } = await supabase.from('inventory').insert(rowsWithUser)
-      if (error) throw error
-      alert('CSVインポート完了')
-      fetchData()
-    } catch (err) {
-      console.error(err)
-      alert('CSVインポートに失敗しました')
-    } finally {
-      e.target.value = '' // 同じファイルの再選択を許可
-    }
-  }
 
   /* ---------- 行操作 ---------- */
   const handleDelete = async (row: any) => {
@@ -293,17 +267,7 @@ const exportToCSV = (row: any) => {
   downloadCsv([row], 'pachimart_row.csv');
 };
 
-  const handleExportCsv = () => {
-    if (entries.length === 0) return
-    const rows = entries.map(r => {
-      const obj: Record<string, any> = {}
-      selectedColumns.forEach(k => {
-        obj[k] = r[k] ?? ''
-      })
-      return obj
-    })
-    downloadCsv(rows, 'inventory.csv')
-  }
+
 
   /* ---------- UI ---------- */
   
@@ -321,103 +285,15 @@ const exportToCSV = (row: any) => {
       </Head>
 
 <SettingsMenu />
-
-    <div className="p-4"></div>
+<header className="flex items-center gap-3 px-4 py-2 bg-white">
+  <Logo />
+  <WarehouseSelect />
+  <Button asChild><Link href="/admin/inventory/bulk-import">一括CSV登録</Link></Button>
+  <Button asChild><Link href="/admin/inventory/new">個別登録</Link></Button>
+  <ColumnSettingsDialog />
+</header>
 
       <div className="p-4">
-        {/* 操作バー */}
-        <div className="flex flex-wrap items-center gap-2 mb-4">
-          <Button
-            onClick={() => document.getElementById('csv-hidden-input')?.click()}
-            className="bg-[#191970] text-white hover:bg-[#15155d] hidden sm:inline-flex"
-          >
-            一括CSV登録
-          </Button>
-
-          <input
-            id="csv-hidden-input"
-            type="file"
-            accept=".csv"
-            onChange={handleFileSelect}
-            className="hidden"
-          />
-
-            <Button
-              onClick={() => window.open('/admin/inventory/input', '_blank')}
-              className="bg-[#191970] text-white hover:bg-[#15155d]"
-            >
-              個別登録
-            </Button>
-
-            <Button
-              onClick={() => router.push('/warehouses')}
-              className="bg-[#191970] text-white hover:bg-[#15155d]"
-            >
-              倉庫一覧
-            </Button>
-
-          <Button
-            onClick={() => setShowFilters(!showFilters)}
-            className="bg-[#191970] text-white hover:bg-[#15155d] hidden sm:inline-flex"
-          >
-            項目を絞り込む
-          </Button>
-
-          <select
-            value={makerFilter}
-            onChange={e => setMakerFilter(e.target.value)}
-            className="border px-3 py-[6px] h-[38px] rounded"
-          >
-            <option value="">メーカー指定なし</option>
-            {makerOptions.map(m => <option key={m}>{m}</option>)}
-          </select>
-
-          <select
-            value={selectedPreset ?? ''}
-            onChange={e => {
-              const id = Number(e.target.value)
-              setSelectedPreset(id || null)
-              const p = presets.find(pr => pr.id === id)
-              if (p) setSelectedColumns(p.visible_columns)
-            }}
-            className="border px-3 py-[6px] h-[38px] rounded"
-          >
-            <option value="">プリセット選択</option>
-            {presets.map(p => (
-              <option key={p.id} value={p.id}>{p.name}</option>
-            ))}
-          </select>
-          <Button
-            variant="ghost"
-            disabled={!selectedPreset}
-            onClick={async () => {
-              if (!selectedPreset) return
-              await deletePreset(selectedPreset)
-              setPresets(prev => prev.filter(p => p.id !== selectedPreset))
-              setSelectedPreset(null)
-            }}
-          >
-            削除
-          </Button>
-          <Button
-            onClick={() => setShowPresetModal(true)}
-            className="bg-[#191970] text-white hover:bg-[#15155d]"
-          >
-            表示項目設定
-          </Button>
-          <Input
-            placeholder="検索"
-            value={tableSearch}
-            onChange={e => setTableSearch(e.target.value)}
-            className="w-40"
-          />
-          <Button
-            onClick={handleExportCsv}
-            className="bg-[#191970] text-white hover:bg-[#15155d]"
-          >
-            CSV Export
-          </Button>
-        </div>
 
         {/* 列選択 UI */}
         {showFilters && (
@@ -443,7 +319,7 @@ const exportToCSV = (row: any) => {
         </div>
 
         {/* データテーブル */}
-        <div className="w-full overflow-x-auto">
+        <div className="w-full overflow-x-auto mt-4">
   <table className="w-full sm:min-w-[1200px] text-sm border border-gray-300">
             <thead className="bg-gray-100 text-xs select-none">
               <tr>

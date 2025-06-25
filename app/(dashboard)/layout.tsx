@@ -1,7 +1,6 @@
 'use client'
 
 import DashboardNav from '@/components/DashboardNav'
-import BackButton from '@/components/BackButton'
 
 export default function DashboardLayout({
   children,
@@ -12,7 +11,6 @@ export default function DashboardLayout({
     <div className="min-h-screen flex flex-col">
       <DashboardNav />
       <div className="p-4 flex-1">
-        <BackButton />
         {children}
       </div>
     </div>
