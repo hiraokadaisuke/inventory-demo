@@ -386,7 +386,7 @@ const exportToCSV = (row: any) => {
           className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-indigo-800 text-white text-sm rounded"
         >
           <Upload className="w-4 h-4" />
-          出品
+          パチマートへ出品
         </button>
 
         <button
@@ -398,7 +398,7 @@ const exportToCSV = (row: any) => {
           className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-indigo-800 text-white text-sm rounded"
         >
           <FileText className="w-4 h-4" />
-          PDF
+          書類のダウンロード
         </button>
       </div>
 
