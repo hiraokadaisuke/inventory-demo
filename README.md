@@ -23,8 +23,9 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 ### Google Cloud Vision
 
 OCR features require a Google Cloud Vision service account key. Place the JSON
-key at `gcp-vision-key.json` in the project root or specify a custom path using
-the `GCP_VISION_KEY_PATH` environment variable when running the server.
+key at `gcp-vision-key.json` in the project root or specify a custom path by
+setting `GCP_VISION_KEY_PATH` in your environment (see `.env.example`) when
+running the server.
 
 ## Learn More
 
@@ -48,6 +49,13 @@ Use `/signup` to create an account and `/login` to access the app. After sign-up
 ### FAQ
 
 Basic usage tips and troubleshooting steps are available at `/faq`.
+
+### Error Pages
+
+Visiting `/404` or navigating to a non-existent route shows a 404 screen with
+the message "ページが見つかりません". The `/500` path displays
+"サーバーエラーが発生しました" and is also shown when an unhandled server error
+occurs.
 
 ---
 

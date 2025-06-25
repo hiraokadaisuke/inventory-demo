@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
 
     const [result] = await client.textDetection({ image: { content: buffer } })
     const text = result.textAnnotations?.[0]?.description || ''
-    console.log('📄 OCR結果全文:', text)
+    console.debug('📄 OCR結果全文:', text)
 
     // シリアル番号抽出用の共通正規表現（メーカー記号に柔軟対応）
     const serialRegex = /[A-Z]{2,4}-[A-Z]?\s*\d{5,6}/g
