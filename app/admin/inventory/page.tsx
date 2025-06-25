@@ -327,10 +327,12 @@ const exportToCSV = (row: any) => {
               {entries.map(row => (
                 <tr
   key={row.id}
-  className="hover:bg-gray-50 relative"
+  className="hover:bg-gray-50 relative select-none"
   onContextMenu={e => {
     e.preventDefault();
-    setContextMenu({ x: e.clientX, y: e.clientY, row });
+    if (window.innerWidth >= 640) {
+      setContextMenu({ x: e.clientX, y: e.clientY, row });
+    }
   }}
   onClick={() => {
     if (window.innerWidth < 640) setMobileMenuRow(row);   // スマホだけ行タップ
