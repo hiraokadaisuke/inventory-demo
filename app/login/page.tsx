@@ -1,32 +1,52 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { supabase } from "@/lib/supabase";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export default function LoginPage() {
-  const router = useRouter()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    const code = searchParams.get("code");
+    if (code) {
+      setLoading(true);
+      supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
+        if (error) {
+          setError(error.message);
+          setLoading(false);
+        } else {
+          router.replace("/admin/inventory");
+        }
+      });
+      return;
+    }
     supabase.auth.getUser().then(({ data }) => {
-      if (data.user) router.replace('/admin/inventory')
-    })
-  }, [router])
+      if (data.user) router.replace("/admin/inventory");
+    });
+  }, [router, searchParams]);
 
   const handleLogin = async () => {
-    setError(null)
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    setError(null);
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    setLoading(false);
     if (error) {
-      setError(error.message)
+      setError(error.message);
     } else {
-      router.replace('/admin/inventory')
+      router.replace("/admin/inventory");
     }
-  }
+  };
 
   return (
     <div className="max-w-sm mx-auto mt-20 space-y-4">
@@ -36,15 +56,17 @@ export default function LoginPage() {
         type="email"
         placeholder="Email"
         value={email}
-        onChange={e => setEmail(e.target.value)}
+        onChange={(e) => setEmail(e.target.value)}
       />
       <Input
         type="password"
         placeholder="Password"
         value={password}
-        onChange={e => setPassword(e.target.value)}
+        onChange={(e) => setPassword(e.target.value)}
       />
-      <Button className="w-full" onClick={handleLogin}>ログイン</Button>
+      <Button className="w-full" onClick={handleLogin} disabled={loading}>
+        {loading ? "処理中..." : "ログイン"}
+      </Button>
     </div>
-  )
+  );
 }
