@@ -23,7 +23,18 @@ export default function SettingsMenu() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="bg-white rounded shadow p-2 mt-2">
-        <DropdownMenuItem className="hover:bg-gray-100 p-2 rounded">アカウント設定</DropdownMenuItem>
+        <DropdownMenuItem
+          className="hover:bg-gray-100 p-2 rounded"
+          onClick={() => router.push('/warehouses')}
+        >
+          倉庫設定
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          className="hover:bg-gray-100 p-2 rounded"
+          onClick={() => router.push('/settings/account')}
+        >
+          アカウント設定
+        </DropdownMenuItem>
         <DropdownMenuItem className="hover:bg-gray-100 p-2 rounded" onClick={handleLogout}>
           ログアウト
         </DropdownMenuItem>
