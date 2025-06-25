@@ -3,6 +3,7 @@ export const runtime = 'nodejs'
 
 import { NextRequest, NextResponse } from 'next/server'
 import vision from '@google-cloud/vision'
+import fs from 'fs'
 import dayjs from 'dayjs'
 import 'dayjs/locale/ja'
 
@@ -16,8 +17,19 @@ export async function POST(req: NextRequest) {
 
     const buffer = Buffer.from(await file.arrayBuffer())
 
+    const keyPath = process.env.GCP_VISION_KEY_PATH || 'gcp-vision-key.json'
+    if (!fs.existsSync(keyPath)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `GCP Vision key file not found at ${keyPath}. Set GCP_VISION_KEY_PATH to override.`,
+        },
+        { status: 500 }
+      )
+    }
+
     const client = new vision.ImageAnnotatorClient({
-      keyFilename: 'gcp-vision-key.json',
+      keyFilename: keyPath,
     })
 
     const [result] = await client.textDetection({ image: { content: buffer } })

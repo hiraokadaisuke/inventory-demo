@@ -20,6 +20,12 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+### Google Cloud Vision
+
+OCR features require a Google Cloud Vision service account key. Place the JSON
+key at `gcp-vision-key.json` in the project root or specify a custom path using
+the `GCP_VISION_KEY_PATH` environment variable when running the server.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
