@@ -14,6 +14,7 @@ import { Download,  Pencil, Trash2 } from 'lucide-react'
 import { Package } from 'lucide-react'
 import { MoreVertical } from 'lucide-react';
 import { Upload, FileText } from 'lucide-react'
+import { formatDateJP } from '@/lib/utils'
 
 
 
@@ -257,15 +258,6 @@ export default function AdminInventoryPage() {
     )
   }
 
-  /* ---------- 日付表示 ---------- */
-  const dateFmt = (d?: string) => {
-    if (!d) return '-'
-    const dt = new Date(d)
-    return isNaN(dt.getTime())
-      ? d
-      : `${dt.getFullYear().toString().slice(-2)}/${dt.getMonth() + 1}/${dt.getDate()}`
-  }
-
   /* ---------- 外クリックでメニュー全部閉じる ---------- */
   useEffect(() => {
     const close = () => { setContextMenu(null); setFilterMenu(null) }
@@ -502,7 +494,7 @@ const exportToCSV = (row: any) => {
       ) : c.key === 'warehouse_id'
         ? row.warehouses?.name ?? '-'
         : c.key.includes('date') || c.key.includes('expiry')
-        ? dateFmt(row[c.key])
+        ? formatDateJP(row[c.key])
         : String(row[c.key] ?? '-')}
     </td>
   ))}
