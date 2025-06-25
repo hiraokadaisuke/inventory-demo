@@ -38,7 +38,7 @@ export default function SetupPage() {
       setError(result.error)
       return
     }
-    router.replace('/inventory')
+    router.replace('/admin/inventory')
   }
 
   return (
