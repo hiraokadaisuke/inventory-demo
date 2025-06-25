@@ -12,7 +12,7 @@ export default function TestPage() {
 
   const handleContextMenu = (e: React.MouseEvent, row: any) => {
     e.preventDefault()
-    console.log('右クリック検知:', row)
+    console.debug('右クリック検知:', row)
     if (window.innerWidth >= 640) {
       setContextMenu({ x: e.clientX, y: e.clientY, row })
     }

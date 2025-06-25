@@ -245,10 +245,10 @@ export default function AdminInventoryPage() {
   }
 
   /* ---------- PDF 生成／出品（stub） ---------- */
-  const exportKentei       = (row: any) => { /* TODO: 実装 */ console.log('検定通知書', row) }
-  const exportConfirmation = (row: any) => { /* TODO: 実装 */ console.log('中古遊技機確認書', row) }
-  const exportRemoval      = (row: any) => { /* TODO: 実装 */ console.log('撤去明細書', row) }
-  const exportToPachimart  = (row: any) => { /* TODO: 実装 */ console.log('パチマート出品', row) }
+  const exportKentei       = (row: any) => { /* TODO: 実装 */ console.info('検定通知書', row) }
+  const exportConfirmation = (row: any) => { /* TODO: 実装 */ console.info('中古遊技機確認書', row) }
+  const exportRemoval      = (row: any) => { /* TODO: 実装 */ console.info('撤去明細書', row) }
+  const exportToPachimart  = (row: any) => { /* TODO: 実装 */ console.info('パチマート出品', row) }
 
   /* ---------- 列切り替え ---------- */
   const toggleColumn = (k: string) => {

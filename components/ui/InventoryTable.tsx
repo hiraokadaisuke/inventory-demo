@@ -93,21 +93,21 @@ export default function InventoryTable<T>({
         >
           <li
             style={{ padding: '6px 12px', cursor: 'pointer' }}
-            onClick={() => {
-              setContextMenu(null)
-              console.log('📄 中古遊技機確認書を作成：', contextMenu.row)
-              // ★ここでAPI呼び出し処理を後で実装
-            }}
+              onClick={() => {
+                setContextMenu(null)
+                console.info('📄 中古遊技機確認書を作成：', contextMenu.row)
+                // ★ここでAPI呼び出し処理を後で実装
+              }}
           >
             📄 中古遊技機確認書を作成
           </li>
           <li
             style={{ padding: '6px 12px', cursor: 'pointer' }}
-            onClick={() => {
-              setContextMenu(null)
-              console.log('🧾 検定通知書を表示：', contextMenu.row)
-              // ★ここでPDF表示処理を後で実装
-            }}
+              onClick={() => {
+                setContextMenu(null)
+                console.info('🧾 検定通知書を表示：', contextMenu.row)
+                // ★ここでPDF表示処理を後で実装
+              }}
           >
             🧾 検定通知書の表示
           </li>

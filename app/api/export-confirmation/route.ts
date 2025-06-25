@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
   const id = searchParams.get('id') || 'test'
 
   const filePath = path.join(process.cwd(), 'templates', 'confirmation_template.xlsx')
-  console.log('📂 テンプレートパス:', filePath)
+  console.info('📂 テンプレートパス:', filePath)
 
   if (!fs.existsSync(filePath)) {
     console.error('❌ テンプレートファイルが見つかりません')
@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
 
   try {
     await workbook.xlsx.readFile(filePath)
-    console.log('✅ テンプレート読み込み成功')
+    console.info('✅ テンプレート読み込み成功')
   } catch (error) {
     console.error('❌ Excel読み込みエラー:', error)
     return new Response('Excel読み込みエラー', { status: 500 })
