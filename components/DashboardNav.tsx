@@ -25,9 +25,7 @@ export default function DashboardNav() {
         アカウント設定
       </Link>
       <div className="flex-1" />
-      <Button variant="outline" onClick={handleLogout}>
-        ログアウト
-      </Button>
+    
     </nav>
   )
 }

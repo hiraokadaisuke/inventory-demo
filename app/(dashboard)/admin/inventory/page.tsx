@@ -15,6 +15,7 @@ import { Package } from 'lucide-react'
 import { MoreVertical } from 'lucide-react';
 import { Upload, FileText } from 'lucide-react'
 import { formatDateJP } from '@/lib/utils'
+import SettingsMenu from "@/components/ui/SettingsMenu"
 
 
 
@@ -305,6 +306,7 @@ const exportToCSV = (row: any) => {
   }
 
   /* ---------- UI ---------- */
+  
   return (
     <>
       {/* フォント */}
@@ -317,6 +319,10 @@ const exportToCSV = (row: any) => {
           body  { font-family: var(--pachimart-font); }
         `}</style>
       </Head>
+
+<SettingsMenu />
+
+    <div className="p-4"></div>
 
       <div className="p-4">
         {/* 操作バー */}
@@ -556,7 +562,7 @@ const exportToCSV = (row: any) => {
 
 
 
-/* ---------- 右クリックメニュー ---------- */
+{/* 右クリックメニュー */}
 {contextMenu && (
   <ul
     style={{
@@ -613,6 +619,7 @@ const exportToCSV = (row: any) => {
     />
   </ul>
 )}
+
 
 
         {/* フィルターダイアログ（省略＝元のまま） */}
