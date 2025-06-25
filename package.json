@@ -6,7 +6,7 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "next lint .",
     "test": "jest"
   },
   "dependencies": {
@@ -32,6 +32,8 @@
     "@types/papaparse": "^5.3.16",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "eslint": "^9.29.0",
+    "eslint-config-next": "^15.3.4",
     "jest": "^30.0.2",
     "tailwindcss": "^4",
     "ts-jest": "^29.4.0",
