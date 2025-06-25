@@ -43,4 +43,4 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 ### Authentication
 
-Use `/signup` to create an account and `/login` to access the app. After sign-up a default warehouse record is created automatically.
+Use `/signup` to receive a sign-up link via email and `/login` to access the app. After sign-up a default warehouse record is created automatically.
