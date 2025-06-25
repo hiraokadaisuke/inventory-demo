@@ -14,7 +14,7 @@ export default function SignupPage() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      if (data.user) router.replace('/admin/inventory')
+      if (data.user) router.replace('/inventory')
     })
   }, [router])
 
@@ -25,12 +25,7 @@ export default function SignupPage() {
       setError(error?.message || 'signup failed')
       return
     }
-    await fetch('/api/create-default-warehouse', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: data.user.id }),
-    })
-    router.replace('/admin/inventory')
+    router.replace('/setup')
   }
 
   return (
