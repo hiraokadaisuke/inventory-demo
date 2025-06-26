@@ -1,6 +1,6 @@
 'use client'
 
-import DashboardNav from '@/components/DashboardNav'
+import DashboardHeader from '@/components/DashboardHeader'
 
 export default function DashboardLayout({
   children,
@@ -9,7 +9,7 @@ export default function DashboardLayout({
 }) {
   return (
     <div className="min-h-screen flex flex-col">
-      <DashboardNav />
+      <DashboardHeader />
       <div className="p-4 flex-1">
         {children}
       </div>

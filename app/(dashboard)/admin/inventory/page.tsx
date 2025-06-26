@@ -6,10 +6,7 @@ import Head from 'next/head'
 import { supabase } from '@/lib/supabase'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import Link from 'next/link'
-import Logo from '@/components/Logo'
-import WarehouseSelect from '@/components/WarehouseSelect'
-import ColumnSettingsDialog from '@/components/ColumnSettingsDialog'
+import DashboardHeader from '@/components/DashboardHeader'
 import { downloadCsv } from '@/lib/utils'
 import EditModal from '@/components/EditModal'
 import ColumnPresetModal from '@/components/ColumnPresetModal'
@@ -18,7 +15,6 @@ import { Download, Pencil, Trash2 } from 'lucide-react'
 import { Package } from 'lucide-react'
 import { Upload, FileText } from 'lucide-react'
 import { formatDateJP } from '@/lib/utils'
-import SettingsMenu from "@/components/ui/SettingsMenu"
 
 
 
@@ -284,14 +280,7 @@ const exportToCSV = (row: any) => {
         `}</style>
       </Head>
 
-<SettingsMenu />
-<header className="flex items-center gap-3 px-4 py-2 bg-white">
-  <Logo />
-  <WarehouseSelect />
-  <Button asChild><Link href="/admin/inventory/bulk-import">一括CSV登録</Link></Button>
-  <Button asChild><Link href="/admin/inventory/new">個別登録</Link></Button>
-  <ColumnSettingsDialog />
-</header>
+<DashboardHeader />
 
       <div className="p-4">
 
