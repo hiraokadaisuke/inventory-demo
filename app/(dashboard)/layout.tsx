@@ -1,6 +1,7 @@
 'use client'
 
 import DashboardHeader from '@/components/DashboardHeader'
+import { WarehouseProvider } from '@/components/WarehouseContext'
 
 export default function DashboardLayout({
   children,
@@ -8,11 +9,13 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="min-h-screen flex flex-col">
-      <DashboardHeader />
-      <div className="p-4 flex-1">
-        {children}
+    <WarehouseProvider>
+      <div className="min-h-screen flex flex-col">
+        <DashboardHeader />
+        <div className="p-4 flex-1">
+          {children}
+        </div>
       </div>
-    </div>
+    </WarehouseProvider>
   )
 }
