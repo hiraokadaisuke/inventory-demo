@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useContext } from 'react'
 import { useRouter } from 'next/navigation'
 import Head from 'next/head'
 import { supabase } from '@/lib/supabase'
@@ -15,6 +15,7 @@ import { Download, Pencil, Trash2 } from 'lucide-react'
 import { Package } from 'lucide-react'
 import { Upload, FileText } from 'lucide-react'
 import { formatDateJP } from '@/lib/utils'
+import { WarehouseContext } from '@/components/WarehouseContext'
 
 
 
@@ -109,6 +110,8 @@ export default function AdminInventoryPage() {
     [...new Set(allEntries.map(e => e.maker).filter(Boolean))].sort()
   const [tableSearch, setTableSearch] = useState('')
 
+  const { selectedWarehouseId } = useContext(WarehouseContext)
+
   /* ---------- プリセット読み込み ---------- */
   useEffect(() => {
     const load = async () => {
@@ -138,11 +141,14 @@ export default function AdminInventoryPage() {
       .from('inventory')
       .select('*, warehouses(name)')
       .eq('user_id', user.id)
+    if (selectedWarehouseId) {
+      query = query.eq('warehouse_id', selectedWarehouseId)
+    }
     if (sortColumn) query = query.order(sortColumn, { ascending: sortAsc })
     const { data, error } = await query
     if (!error && data) setAllEntries(data)
   }
-  useEffect(() => { fetchData() }, [sortColumn, sortAsc])
+  useEffect(() => { fetchData() }, [sortColumn, sortAsc, selectedWarehouseId])
 
   const saveRow = async (data: any) => {
     const { data: { user } } = await supabase.auth.getUser()
