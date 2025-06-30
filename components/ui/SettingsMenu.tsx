@@ -1,7 +1,7 @@
 'use client'
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@radix-ui/react-dropdown-menu"
-import { Settings } from "lucide-react"
+import { Menu } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
@@ -19,10 +19,10 @@ export default function SettingsMenu() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="absolute top-4 right-4 z-50">
-          <Settings className="h-5 w-5" />
-        </Button>
+  <Menu className="h-5 w-5" />
+</Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="bg-white rounded shadow p-2 mt-2">
+      <DropdownMenuContent className="mt-2 w-48 rounded-md bg-white shadow-md border border-gray-200 z-50">
         <DropdownMenuItem
           className="hover:bg-gray-100 p-2 rounded"
           onClick={() => router.push('/warehouses')}

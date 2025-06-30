@@ -15,7 +15,9 @@ import { Download, Pencil, Trash2 } from 'lucide-react'
 import { Package } from 'lucide-react'
 import { Upload, FileText } from 'lucide-react'
 import { formatDateJP } from '@/lib/utils'
-
+import WarehouseSelect from '@/components/WarehouseSelect'
+import ColumnSettingsDialog from '@/components/ColumnSettingsDialog'
+import Link from 'next/link'
 
 
 
@@ -25,33 +27,41 @@ import { formatDateJP } from '@/lib/utils'
  * カラム定義
  * ------------------------------------------- */
 const columns = [
-  { key: 'installation',         label: '設置' },
+  { key: 'status',               label: '状況(設置・倉庫・売却)' },
   { key: 'type',                 label: '種別' },
   { key: 'maker',                label: 'メーカー' },
-  { key: 'machine_name',         label: '機種名' },
-  { key: 'frame_color',          label: '枠色' },
+  { key: 'machine_name',         label: '機種' },
+  { key: 'frame_color',          label: '枠色・パネル' },
   { key: 'board_serial',         label: '遊技盤番号等' },
   { key: 'frame_serial',         label: '枠番号' },
   { key: 'main_board_serial',    label: '主基板番号等' },
+  { key: 'removal_date',         label: '撤去日' },
+  { key: 'usage_count',          label: '使用次' },
+  { key: 'warehouse_id',         label: '倉庫' },
+  { key: 'note',                 label: '備考' },
   { key: 'installation_date',    label: '設置日' },
   { key: 'certificate_date',     label: '検定日' },
   { key: 'certificate_expiry',   label: '検定期日' },
   { key: 'approval_date',        label: '認定日' },
   { key: 'approval_expiry',      label: '認定期日' },
-  { key: 'removal_date',         label: '撤去日' },
-  { key: 'elapsed_years',        label: '経過年数' },
-  { key: 'purchase_flag',        label: '購入' },
-  { key: 'usage_count',          label: '使用次' },
-  { key: 'purchase_unit_price',  label: '購入単価' },
-  { key: 'purchase_total_price', label: '購入金額' },
+  { key: 'installation_period',  label: '設置期間' },
+  { key: 'purchase_source',      label: '購入元' },
+  { key: 'purchase_total_price_tax_ex', label: '購入金額(税抜)' },
+  { key: 'purchase_total_price_tax_in', label: '購入金額(税込)' },
   { key: 'sell_date',            label: '売却日' },
   { key: 'buyer',                label: '売却先' },
-  { key: 'sell_unit_price',      label: '売却単価' },
-  { key: 'sell_total_price',     label: '売却金額' },
-  { key: 'status',               label: '状況' },
-  { key: 'warehouse_id',        label: '倉庫' },
-  { key: 'quantity',            label: '数量' },
-  { key: 'note',                 label: '備考' },
+  { key: 'sell_total_price_tax_ex', label: '売却金額(税抜)' },
+  { key: 'sell_total_price_tax_in', label: '売却金額(税込)' },
+  { key: 'excluded_company',     label: '外れ法人' },
+  { key: 'excluded_store',       label: '外れ店' },
+  { key: 'stock_in_date',        label: '入庫日' },
+  { key: 'read_date',            label: '読取日' },
+  { key: 'read_staff',           label: '読取担当者' },
+  { key: 'storage_fee_calc',     label: '保管料計算' },
+  { key: 'glass_cylinder',       label: 'ガラス・シリンダー' },
+  { key: 'sale_price',           label: '販売価格' },
+  { key: 'nail_sheet',           label: '釘シート' },
+  { key: 'condition',            label: '状態' },
 ]
 
 /* ---------------------------------------------
@@ -111,21 +121,31 @@ export default function AdminInventoryPage() {
 
   /* ---------- プリセット読み込み ---------- */
   useEffect(() => {
-    const load = async () => {
-      const { data } = await supabase.auth.getSession()
-      const userId = data.session?.user.id
-      if (!userId) return
-      const latest = await fetchLatestPreset(userId)
-      if (latest) {
-        setSelectedPreset(latest.id)
-        if (latest.visible_columns) setSelectedColumns(latest.visible_columns)
-      }
-      const list = await listPresets(userId)
-      setPresets(list)
-    }
-    load()
-  }, [])
+  const load = async () => {
+    const { data } = await supabase.auth.getSession()
+    const userId = data.session?.user.id
+    if (!userId) return
 
+    const latest = await fetchLatestPreset(userId)
+    if (latest) {
+      setSelectedPreset(latest.id)
+      if (latest.visible_columns) {
+        setSelectedColumns(latest.visible_columns)
+        setVisibleKeys(latest.visible_columns)  // ✅ 正しく初期化
+      }
+    } else {
+      // プリセットがなかった場合の初期化（全カラム表示など）
+      setVisibleKeys(columns.map(c => c.key))
+    }
+
+    const list = await listPresets(userId)
+    setPresets(list)
+  }
+  load()
+}, [])
+
+
+  const [selectedWarehouseId, setSelectedWarehouseId] = useState<string>('all')
   /* ---------- データ取得 ---------- */
   const fetchData = async () => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -135,14 +155,28 @@ export default function AdminInventoryPage() {
     }
 
     let query: any = supabase
-      .from('inventory')
-      .select('*, warehouses(name)')
-      .eq('user_id', user.id)
-    if (sortColumn) query = query.order(sortColumn, { ascending: sortAsc })
-    const { data, error } = await query
-    if (!error && data) setAllEntries(data)
+  .from('inventory')
+  .select('*, warehouses(name)')
+  .eq('user_id', user.id)
+
+if (selectedWarehouseId && selectedWarehouseId !== 'all') {
+  query = query.eq('warehouse_id', selectedWarehouseId)
+}
+
+if (sortColumn) {
+  query = query.order(sortColumn, { ascending: sortAsc })
+}
+
+const { data, error } = await query
+
+
+
+if (!error && data) setAllEntries(data)
+
   }
-  useEffect(() => { fetchData() }, [sortColumn, sortAsc])
+
+
+  useEffect(() => { fetchData() }, [sortColumn, sortAsc,selectedWarehouseId])
 
   const saveRow = async (data: any) => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -184,6 +218,9 @@ export default function AdminInventoryPage() {
     setEntries(filtered)
   }, [allEntries, makerFilter, columnValueFilters, tableSearch])
 
+
+
+  
 
 
   /* ---------- 行操作 ---------- */
@@ -249,6 +286,12 @@ export default function AdminInventoryPage() {
     setSearchText('')
   }
 
+
+  useEffect(() => {
+  console.log('✅ 現在選択されている倉庫ID:', selectedWarehouseId)
+}, [selectedWarehouseId])
+
+
   const toggleSort = (key: string) => {
     if (sortColumn === key) {
       setSortAsc(!sortAsc)
@@ -263,7 +306,11 @@ const exportToCSV = (row: any) => {
   downloadCsv([row], 'pachimart_row.csv');
 };
 
+const [visibleKeys, setVisibleKeys] = useState<string[]>([])
 
+
+
+const filteredColumns = columns.filter(c => visibleKeys.includes(c.key))
 
   /* ---------- UI ---------- */
   
@@ -280,27 +327,56 @@ const exportToCSV = (row: any) => {
         `}</style>
       </Head>
 
-<DashboardHeader />
+<div className="flex items-center gap-3 px-4 py-2 bg-white border-b">
+  
+  <WarehouseSelect
+  selected={selectedWarehouseId}
+  onChange={(id: string) => {
+    console.log('🟡 Admin側で受け取った倉庫ID:', id)
+    setSelectedWarehouseId(id)
+  }}
+/>
+  <Button asChild>
+  <Link href="/admin/inventory/csv-import">一括CSV登録</Link>
+  </Button>
+  <Button asChild>
+    <Link href="/admin/inventory/input">個別登録</Link>
+  </Button>
+  <ColumnSettingsDialog
+  columns={columns}
+  selected={visibleKeys}
+  onChange={setVisibleKeys}
+/>
+
+<Button
+  variant="outline"
+  size="sm"
+  onClick={async () => {
+    const { data } = await supabase.auth.getSession()
+    const userId = data.session?.user.id
+    if (!userId) return
+
+    const { error } = await supabase.from('column_presets').insert({
+      user_id: userId,
+      name: 'デフォルト',
+      visible_columns: visibleKeys,
+    })
+
+    if (error) {
+      alert('保存に失敗しました')
+    } else {
+      alert('表示項目を保存しました')
+      reloadPresets()
+    }
+  }}
+>
+  条件を保存
+</Button>
+
+</div>
+
 
       <div className="p-4">
-
-        {/* 列選択 UI */}
-        {showFilters && (
-          <div className="flex flex-wrap gap-3 mb-4 p-3 border rounded bg-gray-50">
-            {columns.map(c => (
-              <label key={c.key} className="flex items-center gap-1 bg-white border rounded px-2 py-1">
-                <input type="checkbox"
-                       checked={selectedColumns.includes(c.key)}
-                       onChange={() => toggleColumn(c.key)} />
-                <span className="text-sm">{c.label}</span>
-              </label>
-            ))}
-            <Button size="sm" onClick={() => setShowFilters(false)}
-                    className="bg-gray-200 text-gray-700 hover:bg-gray-300 rounded px-3 py-1 text-sm">
-              閉じる
-            </Button>
-          </div>
-        )}
 
         {/* 件数 */}
         <div className="flex justify-between items-center mb-1">
@@ -312,7 +388,7 @@ const exportToCSV = (row: any) => {
   <table className="w-full sm:min-w-[1200px] text-sm border border-gray-300">
             <thead className="bg-gray-100 text-xs select-none">
               <tr>
-                {columns.filter(c => selectedColumns.includes(c.key)).map(c => {
+                {columns.filter(c => visibleKeys.includes(c.key)).map(c => {
                   const values = [...new Set(allEntries.map(e =>
                     String(e[c.key] ?? '(空白セル)')))].sort()
                   return (
@@ -350,7 +426,7 @@ const exportToCSV = (row: any) => {
   }}
 >
   {/* 主要3列 + PC用隠し列 */}
-  {columns.filter(c => selectedColumns.includes(c.key)).map(c => (
+  {columns.filter(c => visibleKeys.includes(c.key)).map(c => (
     <td
       key={c.key}
       className={`px-2 py-1 border ${
